@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to Our Web Graphics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 30px;
+            background-color: #f5f5f5;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .card-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 200px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+            background-color: #e6f7ff;
+        }
+
+        .section {
+            display: none;
+            margin-top: 40px;
+        }
+
+        canvas,
+        #canvas3d {
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Welcome to Our Web Graphics</h1>
+
+    <div class="card-container">
+        <div class="card" onclick="showSection('section2d')">
+            <h3>2D Graphics</h3>
+            <p>Explore 2D shapes and transformations</p>
+        </div>
+        <div class="card" onclick="showSection('section3d')">
+            <h3>3D Graphics</h3>
+            <p>Explore 3D shapes with Three.js</p>
+        </div>
+    </div>
+
+    <!-- Section 2D -->
+    <div id="section2d" class="section">
+        <h2>Canvas 2D</h2>
+        <div style="display: flex; justify-content: center; gap: 40px; align-items: flex-start; flex-wrap: wrap;">
+            <div>
+                <canvas id="canvas2d" width="500" height="500" style="border: 1px solid #ccc;"></canvas> <br>
+                <button onclick="resetTransform()">Reset ke Awal 🔄</button>
+            </div>
+            <div id="controls2d" style="max-width: 300px; text-align: left;">
+                <h3>Pilih Bentuk</h3>
+                <button onclick="setShape('segitiga')">Segitiga</button>
+                <button onclick="setShape('lingkaran')">Lingkaran</button>
+                <button onclick="setShape('jajargenjang')">Jajar Genjang</button>
+
+                <h3>Ukuran Bentuk</h3>
+                <label>Sisi/Radius 1: <input id="input1" type="number" value="100"></label><br>
+                <label>Sisi/Radius 2: <input id="input2" type="number" value="50"></label><br>
+                <label>Sisi/Radius 3: <input id="input3" type="number" value="60"></label><br>
+                <button onclick="updateInput()">Terapkan Ukuran</button>
+
+                <h3>Rotasi</h3>
+                <button onclick="rotate(-1)">⟲ Kiri</button>
+                <button onclick="rotate(1)">⟳ Kanan</button>
+
+                <h3>Translasi</h3>
+                <div>
+                    <button onclick="move(0, -10)">⬆️ Atas</button><br>
+                    <button onclick="move(-10, 0)">⬅️ Kiri</button>
+                    <button onclick="move(10, 0)">➡️ Kanan</button><br>
+                    <button onclick="move(0, 10)">⬇️ Bawah</button>
+                </div>
+
+                <h3>Skala</h3>
+                <button onclick="changeScale(0.1)">Perbesar 🔍</button>
+                <button onclick="changeScale(-0.1)">Perkecil 🔎</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 3D -->
+<div id="section3d" class="section">
+    <h2>Canvas 3D</h2>
+    <div style="display: flex; justify-content: center; gap: 40px; align-items: flex-start; flex-wrap: wrap;">
+
+        <!-- KANVAS -->
+        <div>
+            <canvas id="canvas3d" width="500" height="500" style="border: 1px solid #ccc;"></canvas> <br>
+<button onclick="resetAll()">Reset Semua 🔄</button>
+
+        </div>
+
+        <!-- KONTROL -->
+        <div style="max-width: 300px; text-align: left;">
+            <h3>Pilih Objek</h3>
+            <button onclick="createObject('cube')">Kubus</button>
+            <button onclick="createObject('tabung')">Tabung</button>
+            <button onclick="createObject('limas')">Limas</button>
+
+            <h3>Ukuran Objek</h3>
+            <label>Lebar/Keliling: <input id="inputWidth" type="number" value="1" step="0.1"></label><br>
+            <label>Tinggi: <input id="inputHeight" type="number" value="2" step="0.1"></label><br>
+            <button onclick="updateSize()">Terapkan Ukuran</button>
+
+            <h3>Rotasi</h3>
+            <button onclick="rotate3d('left')">⟲ Kiri</button>
+            <button onclick="rotate3d('right')">⟳ Kanan</button><br>
+            <button onclick="rotate3d('up')">🔼 Atas</button>
+            <button onclick="rotate3d('down')">🔽 Bawah</button>
+
+            <h3>Translasi</h3>
+            <button onclick="translate3d('up')">⬆️ Atas</button><br>
+            <button onclick="translate3d('left')">⬅️ Kiri</button>
+            <button onclick="translate3d('right')">➡️ Kanan</button><br>
+            <button onclick="translate3d('down')">⬇️ Bawah</button>
+
+            <h3>Skala</h3>
+            <button onclick="scale3d(0.1)">Perbesar 🔍</button>
+            <button onclick="scale3d(-0.1)">Perkecil 🔎</button>
+        </div>
+    </div>
+</div>
+
+
+
+    <!-- Script -->
+    <script>
+        function showSection(id) {
+            document.getElementById('section2d').style.display = 'none';
+            document.getElementById('section3d').style.display = 'none';
+            document.getElementById(id).style.display = 'block';
+        }
+    </script>
+
+    <script type="module" src="script3d.js"></script>
+    <script src="script2d.js"></script>
+</body>
+
+</html>
