@@ -7,15 +7,14 @@ let angle = 0;
 let offsetX = 0;
 let offsetY = 0;
 let scale = 1;
+let fillColor = "#ff0000"; // Warna default merah
 
 // Input ukuran sisi
 let input1 = 100; // sisi/diameter
 let input2 = 50;  // tinggi/jari-jari kecil
 let input3 = 60;  // sisi miring atau tambahan dimensi
 
-// --- Shape buttons ---
-
-
+// --- Fungsi utama ---
 function setShape(shape) {
   selectedShape = shape;
   draw();
@@ -44,6 +43,13 @@ function updateInput() {
   draw();
 }
 
+// Fungsi untuk menerapkan warna dari input
+function applyColor2d() {
+  const colorInput = document.getElementById("color2d");
+  fillColor = colorInput.value;
+  draw();
+}
+
 function draw() {
   ctx.clearRect(0, 0, canvas2d.width, canvas2d.height);
   ctx.save();
@@ -58,50 +64,50 @@ function draw() {
 }
 
 function drawSelectedShape() {
+  ctx.beginPath();
+
   if (selectedShape === "segitiga") {
-    ctx.beginPath();
     ctx.moveTo(0, -input2); // atas
     ctx.lineTo(input1 / 2, input2);
     ctx.lineTo(-input1 / 2, input2);
     ctx.closePath();
-    ctx.fillStyle = "red";
-    ctx.fill();
   } else if (selectedShape === "lingkaran") {
-    ctx.beginPath();
     ctx.arc(0, 0, input1 / 2, 0, Math.PI * 2);
-    ctx.fillStyle = "blue";
-    ctx.fill();
   } else if (selectedShape === "jajargenjang") {
-    ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.lineTo(input1, 0);
     ctx.lineTo(input1 - input3, input2);
     ctx.lineTo(-input3, input2);
     ctx.closePath();
-    ctx.fillStyle = "green";
-    ctx.fill();
   }
+
+  ctx.fillStyle = fillColor;
+  ctx.fill();
 }
 
-//fungsi reset
+// Fungsi reset transformasi dan input
 function resetTransform() {
-    angle = 0;
-    offsetX = 0;
-    offsetY = 0;
-    scale = 1;
-  
-    // Reset ukuran bentuk ke default
-    input1 = 100;
-    input2 = 50;
-    input3 = 60;
-  
-    // Update juga tampilan inputnya di HTML
-    document.getElementById("input1").value = input1;
-    document.getElementById("input2").value = input2;
-    document.getElementById("input3").value = input3;
-  
-    draw();
-  }
-  
+  angle = 0;
+  offsetX = 0;
+  offsetY = 0;
+  scale = 1;
+
+  // Reset ukuran bentuk ke default
+  input1 = 100;
+  input2 = 50;
+  input3 = 60;
+
+  // Reset warna
+  fillColor = "#ff0000";
+  document.getElementById("color2d").value = fillColor;
+
+  // Reset juga tampilan input di HTML
+  document.getElementById("input1").value = input1;
+  document.getElementById("input2").value = input2;
+  document.getElementById("input3").value = input3;
+
+  draw();
+}
+
 // Gambar pertama kali
 draw();
