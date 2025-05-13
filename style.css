@@ -1,0 +1,231 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
+
+.toolbar {
+  background-color: #f8f9fa;
+  padding: 12px 15px;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.tool-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border-radius: 6px;
+  padding: 5px 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.line-types {
+  display: flex;
+  gap: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 5px;
+}
+
+/* Tambahkan class baru untuk color palette */
+.color-palette {
+  display: flex;
+  gap: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 5px;
+}
+
+.color-option {
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+}
+
+.color-option.active {
+  border-color: #6666ff;
+  transform: scale(1.1);
+}
+
+.color-option.black {
+  background-color: black;
+}
+.color-option.red {
+  background-color: #ff0000;
+}
+.color-option.blue {
+  background-color: #0000ff;
+}
+.color-option.green {
+  background-color: #00ff00;
+}
+.color-option.yellow {
+  background-color: #ffff00;
+}
+.color-option.purple {
+  background-color: #800080;
+}
+.color-option.orange {
+  background-color: #ffa500;
+}
+
+.line-option {
+  width: 30px;
+  height: 20px;
+  cursor: pointer;
+  background-color: white;
+  border-radius: 4px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.line-option.solid::after {
+  content: "";
+  display: block;
+  width: 80%;
+  height: 2px;
+  background-color: black;
+}
+
+.line-option.dotted::after {
+  content: "";
+  display: block;
+  width: 80%;
+  height: 2px;
+  background-image: radial-gradient(circle, black 40%, transparent 40%);
+  background-size: 4px 4px;
+  background-position: center;
+  background-repeat: repeat-x;
+}
+
+.line-option.dashed::after {
+  content: "";
+  display: block;
+  width: 80%;
+  height: 2px;
+  background-image: linear-gradient(to right, black 50%, transparent 50%);
+  background-size: 8px 2px;
+  background-repeat: repeat-x;
+}
+
+.line-option.dashdot::after {
+  content: "";
+  display: block;
+  width: 80%;
+  height: 2px;
+  background-image: linear-gradient(to right, black 50%, transparent 25%, black 5%, transparent 20%);
+  background-size: 16px 2px;
+  background-repeat: repeat-x;
+}
+
+.line-option.active {
+  outline: 2px solid #6666ff;
+  background-color: #f0f0ff;
+}
+
+.shape-palette {
+  display: flex;
+  gap: 5px;
+}
+
+.shape-button, .image-button {
+  width: 35px;
+  height: 35px;
+  border: 1px solid #ccc;
+  background-color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  padding: 5px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.shape-button:hover, .image-button:hover {
+  background-color: #f5f5ff;
+  transform: scale(1.05);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+.shape-button.active {
+  background-color: #e0e0ff;
+  border-color: #6666ff;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(102,102,255,0.3);
+}
+
+.shape-button svg, .image-button svg {
+  width: 20px;
+  height: 20px;
+  pointer-events: none; /* penting: mencegah svg menghalangi click event */
+}
+
+canvas {
+  border: 1px solid #ccc;
+  display: block;
+  margin: 10px auto 0;
+  background-color: white;
+  cursor: crosshair; /* Ubah cursor menjadi crosshair untuk menandakan area yang bisa digambar */
+  user-select: none; /* Mencegah seleksi teks saat menggambar */
+  touch-action: none; /* Mencegah scrolling pada perangkat touchscreen */
+}
+
+canvas:active {
+  cursor: crosshair; /* Tetap crosshair saat active/clicking */
+}
+
+/* Tambahkan style untuk memastikan canvas tetap responsive */
+@media (max-width: 768px) {
+  canvas {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+.action-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.action-button:hover {
+  background-color: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.action-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+}
+
+/* Style khusus untuk tombol Undo yang dibuat melalui JavaScript */
+button.action-button:nth-of-type(1) {
+  background-color: #2196F3;
+}
+
+button.action-button:nth-of-type(1):hover {
+  background-color: #0b7dda;
+}

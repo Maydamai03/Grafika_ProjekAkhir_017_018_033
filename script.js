@@ -1,0 +1,1018 @@
+const canvas = document.getElementById("drawingCanvas");
+const ctx = canvas.getContext("2d");
+
+// Set initial canvas size
+function setCanvasSize() {
+  canvas.width = window.innerWidth - 40; // Add some padding
+  canvas.height = window.innerHeight - 100; // Add space for toolbar
+}
+setCanvasSize();
+
+// Initialize drawing variables
+let drawing = false;
+let color = "#000000";
+let fillColor = "#ffffff";
+let lineWidth = 2;
+let currentShape = "free";
+let fillEnabled = false;
+let lineType = "solid";
+let undoStack = [];
+const maxUndoSteps = 50; // Maximum number of undo steps
+
+// Tambahan untuk fitur objek dan seleksi
+let shapes = []; // Menyimpan semua objek yang sudah digambar
+let selectedShape = null; // Menyimpan objek yang sedang dipilih
+let isDragging = false; // Status drag objek
+let dragStartX, dragStartY; // Posisi awal saat drag
+let dragOffsetX, dragOffsetY; // Offset dari posisi objek
+
+const colorPicker = document.getElementById("shapeColorPicker");
+const fillColorPicker = document.getElementById("shapeFillColorPicker");
+const lineWidthPicker = document.getElementById("shapeLineWidthPicker");
+const resetButton = document.getElementById("resetButton");
+const shapeButtons = document.querySelectorAll(".shape-button");
+const lineOptions = document.querySelectorAll(".line-option");
+
+colorPicker.addEventListener("input", () => (color = colorPicker.value));
+fillColorPicker.addEventListener(
+  "input",
+  () => (fillColor = fillColorPicker.value)
+);
+lineWidthPicker.addEventListener(
+  "change",
+  () => (lineWidth = parseFloat(lineWidthPicker.value))
+);
+
+// Setup line type options
+lineOptions.forEach((option) => {
+  option.addEventListener("click", () => {
+    // Remove active class from all options
+    lineOptions.forEach((opt) => opt.classList.remove("active"));
+    // Add active class to clicked option
+    option.classList.add("active");
+    // Set line type
+    lineType = option.dataset.line;
+  });
+});
+
+// Add undo button to HTML
+const undoButton = document.createElement("button");
+undoButton.textContent = "Undo";
+undoButton.classList.add("action-button");
+document.querySelector(".toolbar").appendChild(undoButton);
+
+// Add a checkbox for fill toggle
+const fillToggleContainer = document.createElement("div");
+fillToggleContainer.classList.add("tool-group");
+fillToggleContainer.innerHTML = `
+  <label for="fillToggle">Isi Bentuk:</label>
+  <input type="checkbox" id="fillToggle" />
+`;
+document
+  .querySelector(".toolbar")
+  .insertBefore(fillToggleContainer, document.querySelector(".shape-palette"));
+
+// Add event listener for fill toggle
+const fillToggle = document.getElementById("fillToggle");
+fillToggle.addEventListener("change", () => (fillEnabled = fillToggle.checked));
+
+// Reset canvas
+resetButton.addEventListener("click", () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  shapes = []; // Reset shapes array
+  selectedShape = null; // Reset selected shape
+  undoStack = []; // Clear undo stack when canvas is reset
+});
+
+// Set up shape buttons
+shapeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    // Remove active class from all buttons
+    shapeButtons.forEach((btn) => btn.classList.remove("active"));
+    // Add active class to clicked button
+    button.classList.add("active");
+    // Set current shape
+    currentShape = button.dataset.shape;
+
+    // Deselect object when changing from selection tool
+    if (button.dataset.shape !== "select" && selectedShape) {
+      selectedShape = null;
+      redrawCanvas();
+    }
+  });
+});
+
+let startX, startY;
+let lastDrawn = null; // Store last drawn image data
+
+canvas.addEventListener("mousedown", (e) => {
+  const mouseX = e.offsetX;
+  const mouseY = e.offsetY;
+
+  // Jika mode seleksi aktif
+  if (currentShape === "select") {
+    // Store previously selected shape
+    const previouslySelected = selectedShape;
+
+    // Try to find a shape at the clicked position
+    selectedShape = findShapeAt(mouseX, mouseY);
+
+    if (selectedShape) {
+      isDragging = true;
+      dragStartX = mouseX;
+      dragStartY = mouseY;
+      dragOffsetX = mouseX - selectedShape.x1;
+      dragOffsetY = mouseY - selectedShape.y1;
+    }
+
+    // Only redraw if the selection changed or we're starting to drag
+    if (previouslySelected !== selectedShape || isDragging) {
+      redrawCanvas();
+    }
+    return;
+  }
+
+  // Jika mode cat ember aktif
+  if (currentShape === "fill") {
+    const clickedShape = findShapeAt(mouseX, mouseY);
+    if (clickedShape) {
+      clickedShape.shapeFillColor = fillColor;
+      clickedShape.shapeFillEnabled = true;
+      redrawCanvas();
+    }
+    return;
+  }
+
+  drawing = true;
+  startX = mouseX;
+  startY = mouseY;
+  lastDrawn = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  // Start new path for free drawing
+  if (currentShape === "free") {
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+  }
+});
+
+canvas.addEventListener("mousemove", (e) => {
+  const mouseX = e.offsetX;
+  const mouseY = e.offsetY;
+
+  // Jika sedang drag objek terpilih
+  if (isDragging && selectedShape) {
+    // Hitung pergeseran objek
+    const deltaX = mouseX - dragStartX;
+    const deltaY = mouseY - dragStartY;
+
+    // Perbarui koordinat objek
+    selectedShape.x1 += deltaX;
+    selectedShape.y1 += deltaY;
+    selectedShape.x2 += deltaX;
+    selectedShape.y2 += deltaY;
+
+    // Perbarui posisi awal untuk drag berikutnya
+    dragStartX = mouseX;
+    dragStartY = mouseY;
+
+    // Gambar ulang semua objek
+    redrawCanvas();
+    return;
+  }
+
+  if (!drawing) return;
+
+  if (currentShape === "free") {
+    setCanvasStyles();
+    ctx.lineTo(mouseX, mouseY);
+    ctx.stroke();
+  } else {
+    // Restore previous state and draw shape preview
+    ctx.putImageData(lastDrawn, 0, 0);
+    setCanvasStyles();
+    drawShape(currentShape, startX, startY, mouseX, mouseY);
+  }
+});
+
+canvas.addEventListener("mouseup", (e) => {
+  // Jika selesai drag objek
+  if (isDragging) {
+    isDragging = false;
+    saveState();
+    return;
+  }
+
+  if (!drawing) return;
+
+  const endX = e.offsetX;
+  const endY = e.offsetY;
+
+  if (currentShape === "free") {
+    // For free drawing, create shape object
+    const freeDrawingShape = {
+      type: "free",
+      x1: Math.min(startX, endX) - 10, // Add padding for better selection
+      y1: Math.min(startY, endY) - 10,
+      x2: Math.max(startX, endX) + 10,
+      y2: Math.max(startY, endY) + 10,
+      shapeColor: color,
+      shapeLineWidth: lineWidth,
+      shapeLineType: lineType,
+      // Store the complete current canvas state
+      imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
+    };
+
+    // Add to shapes array
+    shapes.push(freeDrawingShape);
+  } else {
+    // For regular shapes
+    ctx.putImageData(lastDrawn, 0, 0);
+    setCanvasStyles();
+
+    // Create shape and add to array
+    const regularShape = {
+      type: currentShape,
+      x1: startX,
+      y1: startY,
+      x2: endX,
+      y2: endY,
+      shapeColor: color,
+      shapeFillColor: fillColor,
+      shapeFillEnabled: fillEnabled,
+      shapeLineWidth: lineWidth,
+      shapeLineType: lineType,
+    };
+
+    shapes.push(regularShape);
+    drawShape(currentShape, startX, startY, endX, endY);
+  }
+
+  drawing = false;
+  saveState();
+});
+
+// Add mouse leave handler to prevent shapes getting stuck
+canvas.addEventListener("mouseleave", () => {
+  if (isDragging) {
+    isDragging = false;
+    saveState();
+  }
+
+  if (drawing && currentShape !== "free") {
+    ctx.putImageData(lastDrawn, 0, 0);
+    drawing = false;
+  }
+});
+
+// Apply dash pattern based on selected line type
+function setCanvasStyles() {
+  ctx.strokeStyle = color;
+  ctx.fillStyle = fillColor;
+  ctx.lineWidth = lineWidth;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round"; // Add this for smoother corners
+
+  // Set line style based on lineType
+  switch (lineType) {
+    case "solid":
+      ctx.setLineDash([]);
+      break;
+    case "dotted":
+      ctx.setLineDash([lineWidth, lineWidth * 2]);
+      break;
+    case "dashed":
+      ctx.setLineDash([lineWidth * 3, lineWidth * 2]);
+      break;
+    case "dashdot":
+      ctx.setLineDash([lineWidth * 3, lineWidth * 2, lineWidth, lineWidth * 2]);
+      break;
+  }
+}
+
+function drawShape(
+  shape,
+  x1,
+  y1,
+  x2,
+  y2,
+  isSelected = false,
+  shouldFill = fillEnabled
+) {
+  const w = x2 - x1;
+  const h = y2 - y1;
+
+  // Special case for free drawing
+  if (shape === "free") {
+    // For free drawing, we don't draw anything here - the actual drawing was done during mouse move
+    // We just need to handle selection if needed
+    if (isSelected) {
+      showSelectionBox(x1, y1, x2, y2);
+    }
+    return;
+  }
+
+  ctx.beginPath();
+  switch (shape) {
+    case "circle":
+      const radius = Math.sqrt(w * w + h * h) / 2;
+      ctx.arc(x1 + w / 2, y1 + h / 2, radius, 0, Math.PI * 2);
+      break;
+    case "triangle":
+      ctx.moveTo(x1 + w / 2, y1);
+      ctx.lineTo(x1, y2);
+      ctx.lineTo(x2, y2);
+      ctx.closePath();
+      break;
+    case "parallelogram":
+      ctx.moveTo(x1 + w / 4, y1);
+      ctx.lineTo(x2, y1);
+      ctx.lineTo(x2 - w / 4, y2);
+      ctx.lineTo(x1, y2);
+      ctx.closePath();
+      break;
+    case "cube":
+      // Base rectangle
+      ctx.rect(x1, y1, w, h);
+      ctx.stroke();
+
+      // Top face
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 + w * 0.2, y1 - h * 0.2);
+      ctx.lineTo(x2 + w * 0.2, y1 - h * 0.2);
+      ctx.lineTo(x2, y1);
+      ctx.closePath();
+      if (fillEnabled) ctx.fill();
+      ctx.stroke();
+
+      // Side face
+      ctx.beginPath();
+      ctx.moveTo(x2, y1);
+      ctx.lineTo(x2 + w * 0.2, y1 - h * 0.2);
+      ctx.lineTo(x2 + w * 0.2, y2 - h * 0.2);
+      ctx.lineTo(x2, y2);
+      ctx.closePath();
+      if (fillEnabled) ctx.fill();
+      ctx.stroke();
+
+      // Highlight shape if selected
+      if (isSelected) {
+        // Calculate a more accurate bounding box for the cube's 3D effect
+        const padding = 5;
+        // Find the furthest points of the cube including its 3D parts
+        const cubeMaxX = x2 + w * 0.2;
+        const cubeMinY = y1 - h * 0.2;
+
+        const minX = Math.min(x1, x2) - padding;
+        const minY = Math.min(cubeMinY, y2) - padding;
+        const width = Math.abs(cubeMaxX - x1) + padding * 2;
+        const height = Math.abs(y2 - cubeMinY) + padding * 2;
+
+        // Draw the selection box
+        ctx.save();
+        ctx.strokeStyle = "#007bff"; // Bright blue color
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]); // Solid line for the selection box
+        ctx.strokeRect(minX, minY, width, height);
+
+        // Add handles at the corners
+        const handleSize = 6;
+        ctx.fillStyle = "#ffffff"; // White fill for handles
+
+        // Draw handles at the corners
+        ctx.fillRect(
+          minX - handleSize / 2,
+          minY - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+        ctx.strokeRect(
+          minX - handleSize / 2,
+          minY - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+
+        ctx.fillRect(
+          minX + width - handleSize / 2,
+          minY - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+        ctx.strokeRect(
+          minX + width - handleSize / 2,
+          minY - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+
+        ctx.fillRect(
+          minX - handleSize / 2,
+          minY + height - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+        ctx.strokeRect(
+          minX - handleSize / 2,
+          minY + height - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+
+        ctx.fillRect(
+          minX + width - handleSize / 2,
+          minY + height - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+        ctx.strokeRect(
+          minX + width - handleSize / 2,
+          minY + height - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+
+        ctx.restore();
+      }
+
+      return; // Return after handling selection
+    case "cylinder":
+      // Top ellipse
+      ctx.beginPath();
+      ctx.ellipse(x1 + w / 2, y1 + h / 10, w / 2, h / 10, 0, 0, Math.PI * 2);
+      if (fillEnabled) ctx.fill();
+      ctx.stroke();
+
+      // Side lines
+      ctx.beginPath();
+      ctx.moveTo(x1, y1 + h / 10);
+      ctx.lineTo(x1, y2 - h / 10);
+      ctx.moveTo(x2, y1 + h / 10);
+      ctx.lineTo(x2, y2 - h / 10);
+      ctx.stroke();
+
+      // Bottom ellipse
+      ctx.beginPath();
+      ctx.ellipse(x1 + w / 2, y2 - h / 10, w / 2, h / 10, 0, 0, Math.PI * 2);
+      if (fillEnabled) ctx.fill();
+      ctx.stroke();
+
+      // Highlight shape if selected
+      if (isSelected) {
+        // Calculate an accurate bounding box for the cylinder
+        const padding = 5;
+        // For cylinder, we need to make sure we enclose the full ellipses at top and bottom
+        const minX = x1 - padding;
+        const minY = y1 - padding;
+        const width = Math.abs(x2 - x1) + padding * 2;
+        const height = Math.abs(y2 - y1) + padding * 2;
+
+        // Draw the selection box
+        ctx.save();
+        ctx.strokeStyle = "#007bff"; // Bright blue color
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]); // Solid line for the selection box
+        ctx.strokeRect(minX, minY, width, height);
+
+        // Add handles at the corners
+        const handleSize = 6;
+        ctx.fillStyle = "#ffffff"; // White fill for handles
+
+        // Draw handles at the corners
+        ctx.fillRect(
+          minX - handleSize / 2,
+          minY - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+        ctx.strokeRect(
+          minX - handleSize / 2,
+          minY - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+
+        ctx.fillRect(
+          minX + width - handleSize / 2,
+          minY - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+        ctx.strokeRect(
+          minX + width - handleSize / 2,
+          minY - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+
+        ctx.fillRect(
+          minX - handleSize / 2,
+          minY + height - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+        ctx.strokeRect(
+          minX - handleSize / 2,
+          minY + height - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+
+        ctx.fillRect(
+          minX + width - handleSize / 2,
+          minY + height - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+        ctx.strokeRect(
+          minX + width - handleSize / 2,
+          minY + height - handleSize / 2,
+          handleSize,
+          handleSize
+        );
+
+        ctx.restore();
+      }
+
+      return; // Return after handling selection
+    case "pentagon":
+      const cx = x1 + w / 2;
+      const cy = y1 + h / 2;
+      const r = Math.min(Math.abs(w), Math.abs(h)) / 2;
+      for (let i = 0; i < 5; i++) {
+        const angle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+        const px = cx + r * Math.cos(angle);
+        const py = cy + r * Math.sin(angle);
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      break;
+  }
+
+  // Fill shape if fill is enabled (for most shapes)
+  if (shouldFill) {
+    ctx.fill();
+  }
+  ctx.stroke();
+
+  // Highlight shape if selected
+  if (isSelected) {
+    showSelectionBox(x1, y1, x2, y2, shape);
+  }
+}
+
+// Helper function to show selection box
+function showSelectionBox(x1, y1, x2, y2, shape = "default") {
+  // Draw a blue box around the selected shape
+  ctx.save();
+  ctx.strokeStyle = "#007bff"; // Bright blue color
+  ctx.lineWidth = 2;
+  ctx.setLineDash([]); // Solid line for the selection box
+
+  // Calculate the bounding box based on shape type
+  const padding = 5;
+  let minX, minY, width, height;
+
+  const w = x2 - x1;
+  const h = y2 - y1;
+
+  switch (shape) {
+    case "circle":
+      const radius = Math.sqrt(w * w + h * h) / 2;
+      const centerX = x1 + w / 2;
+      const centerY = y1 + h / 2;
+      minX = centerX - radius - padding;
+      minY = centerY - radius - padding;
+      width = radius * 2 + padding * 2;
+      height = radius * 2 + padding * 2;
+      break;
+
+    case "triangle":
+      minX = Math.min(x1, x1 + w / 2, x2) - padding;
+      minY = Math.min(y1, y2) - padding;
+      width =
+        Math.max(Math.abs(x2 - x1), Math.abs(x2 - (x1 + w / 2))) + padding * 2;
+      height = Math.abs(y2 - y1) + padding * 2;
+      break;
+
+    case "pentagon":
+      const r = Math.min(Math.abs(w), Math.abs(h)) / 2;
+      const cx = x1 + w / 2;
+      const cy = y1 + h / 2;
+      minX = cx - r - padding;
+      minY = cy - r - padding;
+      width = r * 2 + padding * 2;
+      height = r * 2 + padding * 2;
+      break;
+
+    case "parallelogram":
+      minX = Math.min(x1, x1 + w / 4) - padding;
+      minY = y1 - padding;
+      width = Math.abs(x2 - minX) + padding * 2;
+      height = Math.abs(y2 - y1) + padding * 2;
+      break;
+
+    default:
+      // Default bounding box for rectangular shapes
+      minX = Math.min(x1, x2) - padding;
+      minY = Math.min(y1, y2) - padding;
+      width = Math.abs(x2 - x1) + padding * 2;
+      height = Math.abs(y2 - y1) + padding * 2;
+  }
+
+  // Draw the selection box
+  ctx.strokeRect(minX, minY, width, height);
+
+  // Add handles at the corners for better visual indication
+  const handleSize = 6;
+  ctx.fillStyle = "#ffffff"; // White fill for handles
+
+  // Draw handles at the corners
+  ctx.fillRect(
+    minX - handleSize / 2,
+    minY - handleSize / 2,
+    handleSize,
+    handleSize
+  );
+  ctx.strokeRect(
+    minX - handleSize / 2,
+    minY - handleSize / 2,
+    handleSize,
+    handleSize
+  );
+
+  ctx.fillRect(
+    minX + width - handleSize / 2,
+    minY - handleSize / 2,
+    handleSize,
+    handleSize
+  );
+  ctx.strokeRect(
+    minX + width - handleSize / 2,
+    minY - handleSize / 2,
+    handleSize,
+    handleSize
+  );
+
+  ctx.fillRect(
+    minX - handleSize / 2,
+    minY + height - handleSize / 2,
+    handleSize,
+    handleSize
+  );
+  ctx.strokeRect(
+    minX - handleSize / 2,
+    minY + height - handleSize / 2,
+    handleSize,
+    handleSize
+  );
+
+  ctx.fillRect(
+    minX + width - handleSize / 2,
+    minY + height - handleSize / 2,
+    handleSize,
+    handleSize
+  );
+  ctx.strokeRect(
+    minX + width - handleSize / 2,
+    minY + height - handleSize / 2,
+    handleSize,
+    handleSize
+  );
+
+  ctx.restore();
+}
+
+// Add undo button event listener
+undoButton.addEventListener("click", undo);
+
+// Add these new functions
+function saveState() {
+  undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+  if (undoStack.length > maxUndoSteps) {
+    undoStack.shift(); // Remove oldest state if exceeded max steps
+  }
+}
+
+function undo() {
+  if (undoStack.length > 0) {
+    const previousState = undoStack.pop();
+    ctx.putImageData(previousState, 0, 0);
+  }
+}
+
+// Fungsi untuk memeriksa apakah suatu titik berada dalam bentuk
+function isPointInShape(x, y, shape) {
+  const { type, x1, y1, x2, y2 } = shape;
+
+  // Special case for free drawing
+  if (type === "free") {
+    // For free drawing, check if the point is within the bounding box
+    return x >= x1 && x <= x2 && y >= y1 && y <= y2;
+  }
+
+  ctx.beginPath();
+  switch (type) {
+    case "circle":
+      const w = x2 - x1;
+      const h = y2 - y1;
+      const radius = Math.sqrt(w * w + h * h) / 2;
+      const centerX = x1 + w / 2;
+      const centerY = y1 + h / 2;
+
+      // Hitung jarak dari titik ke pusat lingkaran
+      const distanceSquared =
+        (x - centerX) * (x - centerX) + (y - centerY) * (y - centerY);
+      return distanceSquared <= radius * radius;
+
+    case "triangle":
+      ctx.moveTo(x1 + (x2 - x1) / 2, y1); // Puncak segitiga
+      ctx.lineTo(x1, y2); // Kiri bawah
+      ctx.lineTo(x2, y2); // Kanan bawah
+      ctx.closePath();
+      return ctx.isPointInPath(x, y);
+
+    case "parallelogram":
+      ctx.moveTo(x1 + (x2 - x1) / 4, y1);
+      ctx.lineTo(x2, y1);
+      ctx.lineTo(x2 - (x2 - x1) / 4, y2);
+      ctx.lineTo(x1, y2);
+      ctx.closePath();
+      return ctx.isPointInPath(x, y);
+
+    case "cube":
+      // Cek apakah titik berada dalam persegi panjang utama
+      if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+        return true;
+      }
+
+      // Cek apakah titik berada dalam wajah atas
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 + (x2 - x1) * 0.2, y1 - (y2 - y1) * 0.2);
+      ctx.lineTo(x2 + (x2 - x1) * 0.2, y1 - (y2 - y1) * 0.2);
+      ctx.lineTo(x2, y1);
+      ctx.closePath();
+      if (ctx.isPointInPath(x, y)) return true;
+
+      // Cek apakah titik berada dalam wajah samping
+      ctx.beginPath();
+      ctx.moveTo(x2, y1);
+      ctx.lineTo(x2 + (x2 - x1) * 0.2, y1 - (y2 - y1) * 0.2);
+      ctx.lineTo(x2 + (x2 - x1) * 0.2, y2 - (y2 - y1) * 0.2);
+      ctx.lineTo(x2, y2);
+      ctx.closePath();
+      return ctx.isPointInPath(x, y);
+
+    case "cylinder":
+      // Cek apakah titik berada dalam elips atas atau bawah
+      const rx = (x2 - x1) / 2; // radius x
+      const ry = (y2 - y1) / 10; // radius y
+      const cx = x1 + rx; // center x
+
+      // Cek elips atas
+      const cy1 = y1 + ry; // center y atas
+      const distTop =
+        ((x - cx) * (x - cx)) / (rx * rx) + ((y - cy1) * (y - cy1)) / (ry * ry);
+      if (distTop <= 1) return true;
+
+      // Cek elips bawah
+      const cy2 = y2 - ry; // center y bawah
+      const distBottom =
+        ((x - cx) * (x - cx)) / (rx * rx) + ((y - cy2) * (y - cy2)) / (ry * ry);
+      if (distBottom <= 1) return true;
+
+      // Cek apakah titik berada diantara garis silinder
+      return x >= x1 && x <= x2 && y >= cy1 && y <= cy2;
+
+    case "pentagon":
+      const cxPent = x1 + (x2 - x1) / 2;
+      const cyPent = y1 + (y2 - y1) / 2;
+      const rPent = Math.min(Math.abs(x2 - x1), Math.abs(y2 - y1)) / 2;
+
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const angle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+        const px = cxPent + rPent * Math.cos(angle);
+        const py = cyPent + rPent * Math.sin(angle);
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      return ctx.isPointInPath(x, y);
+
+    default:
+      return false;
+  }
+}
+
+// Fungsi untuk mencari objek berdasarkan koordinat
+function findShapeAt(x, y) {
+  for (let i = shapes.length - 1; i >= 0; i--) {
+    if (isPointInShape(x, y, shapes[i])) {
+      return shapes[i];
+    }
+  }
+  return null;
+}
+
+// Fungsi untuk menggambar ulang semua objek
+function redrawCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // First, draw all free drawings (to serve as the background)
+  // We need to iterate in original order to maintain layer ordering
+  for (let i = 0; i < shapes.length; i++) {
+    const shape = shapes[i];
+    if (shape.type === "free" && shape.imageData) {
+      // Draw the free drawing
+      ctx.putImageData(shape.imageData, 0, 0);
+      
+      // If selected, draw the selection box
+      if (shape === selectedShape) {
+        showSelectionBox(shape.x1, shape.y1, shape.x2, shape.y2);
+      }
+    }
+  }
+  
+  // Then draw all non-free shapes
+  for (let i = 0; i < shapes.length; i++) {
+    const shape = shapes[i];
+    if (shape.type !== "free") {
+      const {
+        type,
+        x1,
+        y1,
+        x2,
+        y2,
+        shapeColor,
+        shapeFillColor,
+        shapeFillEnabled,
+        shapeLineWidth,
+        shapeLineType
+      } = shape;
+      
+      // Save current canvas styles
+      const currentStrokeStyle = ctx.strokeStyle;
+      const currentFillStyle = ctx.fillStyle;
+      const currentLineWidth = ctx.lineWidth;
+      const currentLineDash = ctx.getLineDash();
+      
+      // Set properties for this shape
+      ctx.strokeStyle = shapeColor || color;
+      ctx.fillStyle = shapeFillColor || fillColor;
+      ctx.lineWidth = shapeLineWidth || lineWidth;
+      
+      // Set line style
+      switch (shapeLineType || lineType) {
+        case "solid":
+          ctx.setLineDash([]);
+          break;
+        case "dotted":
+          ctx.setLineDash([ctx.lineWidth, ctx.lineWidth * 2]);
+          break;
+        case "dashed":
+          ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2]);
+          break;
+        case "dashdot":
+          ctx.setLineDash([
+            ctx.lineWidth * 3,
+            ctx.lineWidth * 2,
+            ctx.lineWidth,
+            ctx.lineWidth * 2,
+          ]);
+          break;
+      }
+      
+      // Draw the shape
+      drawShape(
+        type,
+        x1,
+        y1,
+        x2,
+        y2,
+        shape === selectedShape,
+        shapeFillEnabled !== undefined ? shapeFillEnabled : fillEnabled
+      );
+      
+      // Restore canvas styles
+      ctx.strokeStyle = currentStrokeStyle;
+      ctx.fillStyle = currentFillStyle;
+      ctx.lineWidth = currentLineWidth;
+      ctx.setLineDash(currentLineDash);
+    }
+  }
+}
+
+// Fungsi untuk fill warna pada titik tertentu (cat ember)
+function floodFill(x, y, fillColor) {
+  // Implementasi flood fill algorithm
+  // Ini merupakan implementasi sederhana, untuk aplikasi riil mungkin perlu algoritma yang lebih efisien
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const width = imageData.width;
+  const height = imageData.height;
+
+  // Mendapatkan indeks pixel dari koordinat x,y
+  const getPixelIndex = (x, y) => (y * width + x) * 4;
+
+  // Mendapatkan warna dari indeks pixel
+  const getColor = (index) => [
+    data[index],
+    data[index + 1],
+    data[index + 2],
+    data[index + 3],
+  ];
+
+  // Mengubah warna pada indeks tertentu
+  const setColor = (index, color) => {
+    data[index] = color[0];
+    data[index + 1] = color[1];
+    data[index + 2] = color[2];
+    data[index + 3] = color[3];
+  };
+
+  // Mengecek apakah dua warna sama
+  const colorMatch = (color1, color2) => {
+    const tolerance = 10; // Toleransi untuk perbandingan warna
+    return (
+      Math.abs(color1[0] - color2[0]) <= tolerance &&
+      Math.abs(color1[1] - color2[1]) <= tolerance &&
+      Math.abs(color1[2] - color2[2]) <= tolerance &&
+      Math.abs(color1[3] - color2[3]) <= tolerance
+    );
+  };
+
+  // Mengonversi hex color ke rgba
+  const hexToRgba = (hex) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return [r, g, b, 255]; // 255 untuk alpha (fully opaque)
+  };
+
+  // Warna yang akan diisi
+  const targetColor = hexToRgba(fillColor);
+
+  // Warna yang akan diganti
+  const replacementColor = getColor(
+    getPixelIndex(Math.floor(x), Math.floor(y))
+  );
+
+  // Jika warna sama, tidak perlu melakukan apa-apa
+  if (colorMatch(targetColor, replacementColor)) return;
+
+  // Algoritma flood fill menggunakan stack
+  const stack = [[Math.floor(x), Math.floor(y)]];
+
+  while (stack.length > 0) {
+    const [currX, currY] = stack.pop();
+
+    // Pastikan koordinat valid
+    if (currX < 0 || currY < 0 || currX >= width || currY >= height) continue;
+
+    // Periksa warna saat ini
+    const index = getPixelIndex(currX, currY);
+    const currentColor = getColor(index);
+
+    // Jika tidak sama dengan warna yang ingin diganti, lanjutkan
+    if (!colorMatch(currentColor, replacementColor)) continue;
+
+    // Ubah warna
+    setColor(index, targetColor);
+
+    // Tambahkan pixel tetangga ke stack
+    stack.push([currX + 1, currY]);
+    stack.push([currX - 1, currY]);
+    stack.push([currX, currY + 1]);
+    stack.push([currX, currY - 1]);
+  }
+
+  // Terapkan perubahan ke canvas
+  ctx.putImageData(imageData, 0, 0);
+}
+
+// Function to save canvas as an image
+const saveButton = document.getElementById("saveButton");
+saveButton.addEventListener("click", () => {
+  // Create a temporary link element
+  const link = document.createElement("a");
+  link.download = "painting.png";
+
+  // Convert canvas to data URL
+  link.href = canvas.toDataURL("image/png");
+
+  // Trigger download
+  link.click();
+});
+
+// Handle window resize
+window.addEventListener("resize", () => {
+  // Save the current canvas content
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  // Resize canvas
+  setCanvasSize();
+
+  // Restore content
+  ctx.putImageData(imgData, 0, 0);
+});
