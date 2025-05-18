@@ -179,4 +179,12 @@
     display: none !important;
 }
 
+#canvas2d {
+  border: 2px dashed #000000;
+  background-color: #ffffff; /* bisa juga di sini kalau mau */
+}
+
+#canvas3d {
+  border: 2px dashed #000000;
+}
 

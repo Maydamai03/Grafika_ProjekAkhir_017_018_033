@@ -2,17 +2,24 @@ const canvas2d = document.getElementById("canvas2d");
 const ctx = canvas2d.getContext("2d");
 
 // State
-let selectedShape = "segitiga";
+let selectedShape = "rumah";
 let angle = 0;
 let offsetX = 0;
 let offsetY = 0;
 let scale = 1;
 let fillColor = "#ff0000"; // Warna default merah
 
+//Interaksi mouse
+let isDragging2d = false;
+let lastMousePos2d = {
+  x: 0,
+  y: 0
+};
+
 // Input ukuran sisi
 let input1 = 100; // sisi/diameter
-let input2 = 50;  // tinggi/jari-jari kecil
-let input3 = 60;  // sisi miring atau tambahan dimensi
+let input2 = 50; // tinggi/jari-jari kecil
+let input3 = 60; // sisi miring atau tambahan dimensi
 
 // --- Fungsi utama ---
 function setShape(shape) {
@@ -66,13 +73,40 @@ function draw() {
 function drawSelectedShape() {
   ctx.beginPath();
 
-  if (selectedShape === "segitiga") {
-    ctx.moveTo(0, -input2); // atas
-    ctx.lineTo(input1 / 2, input2);
-    ctx.lineTo(-input1 / 2, input2);
+  if (selectedShape === "rumah") {
+    // Gambar rumah simpel: kotak + atap segitiga
+
+    // Kotak rumah
+    const width = input1;
+    const height = input2;
+    ctx.rect(-width / 2, 0, width, height);
+
+    // Atap segitiga
+    ctx.moveTo(-width / 2, 0);
+    ctx.lineTo(0, -input3); // input3 jadi tinggi atap
+    ctx.lineTo(width / 2, 0);
     ctx.closePath();
-  } else if (selectedShape === "lingkaran") {
-    ctx.arc(0, 0, input1 / 2, 0, Math.PI * 2);
+  } else if (selectedShape === "nuklir") {
+    const radius = input1;
+    const centerRadius = input2;
+    const bladeWidth = input3;
+
+    // Gambar 3 baling-baling (sector)
+    for (let i = 0; i < 3; i++) {
+      const angle = i * (2 * Math.PI / 3);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, radius, angle - bladeWidth / 2 / radius, angle + bladeWidth / 2 / radius);
+      ctx.closePath();
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+    }
+
+    // Gambar lingkaran tengah
+    ctx.beginPath();
+    ctx.arc(0, 0, centerRadius, 0, Math.PI * 2);
+    ctx.fill();
+
   } else if (selectedShape === "jajargenjang") {
     ctx.moveTo(0, 0);
     ctx.lineTo(input1, 0);
@@ -108,6 +142,41 @@ function resetTransform() {
 
   draw();
 }
+
+
+
+canvas2d.addEventListener("mousedown", (e) => {
+  isDragging2d = true;
+  lastMousePos2d = {
+    x: e.clientX,
+    y: e.clientY
+  };
+});
+
+canvas2d.addEventListener("mouseup", () => {
+  isDragging2d = false;
+});
+
+canvas2d.addEventListener("mouseleave", () => {
+  isDragging2d = false;
+});
+
+canvas2d.addEventListener("mousemove", (e) => {
+  if (!isDragging2d) return;
+
+  const deltaX = e.clientX - lastMousePos2d.x;
+  const deltaY = e.clientY - lastMousePos2d.y;
+
+  offsetX += deltaX;
+  offsetY += deltaY;
+
+  lastMousePos2d = {
+    x: e.clientX,
+    y: e.clientY
+  };
+
+  draw();
+});
 
 // Gambar pertama kali
 draw();

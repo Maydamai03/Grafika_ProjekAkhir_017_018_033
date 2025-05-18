@@ -20,6 +20,8 @@ function init() {
 
     const canvas = document.getElementById("canvas3d");
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setClearColor(0xffffff); // background Canvas 3D nya
+
     renderer.setSize(500, 500);
 
     // Tambah pencahayaan
@@ -60,6 +62,7 @@ function init() {
     });
 
     animate();
+    createObject("cube");
 }
 
 // Loop render
@@ -139,7 +142,7 @@ window.rotate3d = function (direction) {
 
 // Translasi
 window.translate3d = function (direction) {
-    const step = 0.2;
+    const step = 0.4;
     if (direction === 'up') translation.y += step;
     else if (direction === 'down') translation.y -= step;
     else if (direction === 'left') translation.x -= step;
