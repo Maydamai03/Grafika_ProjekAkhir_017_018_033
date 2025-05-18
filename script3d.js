@@ -20,12 +20,10 @@ function init() {
 
     const canvas = document.getElementById("canvas3d");
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    renderer.setClearColor(0xffffff); // background Canvas 3D nya
-
+    renderer.setClearColor(0xffffff);
     renderer.setSize(500, 500);
 
-    // Tambah pencahayaan
-    const ambientLight = new THREE.AmbientLight(0x404040, 2); // cahaya lembut
+    const ambientLight = new THREE.AmbientLight(0x404040, 2);
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(5, 5, 5);
     scene.add(ambientLight, directionalLight);
@@ -77,6 +75,8 @@ function animate() {
 
 // Buat objek 3D
 window.createObject = function (type) {
+    if (!["cube", "tabung", "limas"].includes(type)) return;
+
     if (object) scene.remove(object);
 
     let geometry;
@@ -89,7 +89,13 @@ window.createObject = function (type) {
     }
 
     const colorValue = document.getElementById("color3d").value || "#00ff00";
-    objectMaterial = new THREE.MeshStandardMaterial({ color: new THREE.Color(colorValue), metalness: 0.3, roughness: 0.6 });
+    const isValidHex = /^#([0-9A-Fa-f]{3}){1,2}$/.test(colorValue);
+
+    objectMaterial = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(isValidHex ? colorValue : "#00ff00"),
+        metalness: 0.3,
+        roughness: 0.6
+    });
 
     object = new THREE.Mesh(geometry, objectMaterial);
     scene.add(object);
@@ -100,6 +106,8 @@ window.createObject = function (type) {
 window.updateSize = function () {
     const width = parseFloat(document.getElementById("inputWidth").value);
     const height = parseFloat(document.getElementById("inputHeight").value);
+
+    if (width <= 0 || height <= 0 || isNaN(width) || isNaN(height)) return;
 
     objectWidth = width;
     objectHeight = height;
@@ -134,6 +142,7 @@ window.resetAll = function () {
 // Kontrol rotasi
 window.rotate3d = function (direction) {
     if (!object) return;
+
     if (direction === 'left') object.rotation.y -= 0.1;
     else if (direction === 'right') object.rotation.y += 0.1;
     else if (direction === 'up') object.rotation.x -= 0.1;
@@ -142,6 +151,8 @@ window.rotate3d = function (direction) {
 
 // Translasi
 window.translate3d = function (direction) {
+    if (!object) return;
+
     const step = 0.4;
     if (direction === 'up') translation.y += step;
     else if (direction === 'down') translation.y -= step;
@@ -151,10 +162,12 @@ window.translate3d = function (direction) {
 
 // Skala
 window.scale3d = function (factor) {
-    scale = Math.max(0.1, scale + factor);
+    const newScale = scale + factor;
+    if (newScale <= 0.1) return;
+    scale = newScale;
 };
 
-// Reset transform
+// Reset transformasi
 window.resetTransform3d = function () {
     translation = { x: 0, y: 0, z: 0 };
     scale = 1;
@@ -168,6 +181,7 @@ window.resetTransform3d = function () {
 // Ganti warna
 window.applyColor3d = function () {
     const colorValue = document.getElementById("color3d").value;
+    if (!/^#([0-9A-Fa-f]{3}){1,2}$/.test(colorValue)) return;
     if (object) {
         object.material.color.set(colorValue);
     }

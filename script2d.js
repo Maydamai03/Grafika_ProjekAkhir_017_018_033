@@ -44,11 +44,33 @@ function changeScale(delta) {
 }
 
 function updateInput() {
-  input1 = parseFloat(document.getElementById("input1").value);
-  input2 = parseFloat(document.getElementById("input2").value);
-  input3 = parseFloat(document.getElementById("input3").value);
+  const val1 = parseFloat(document.getElementById("input1").value);
+  const val2 = parseFloat(document.getElementById("input2").value);
+  const val3 = parseFloat(document.getElementById("input3").value);
+
+  // Validasi angka dan nilai positif
+  if (isNaN(val1) || val1 <= 0) {
+    alert("Input 1 harus berupa angka positif.");
+    return;
+  }
+
+  if (isNaN(val2) || val2 <= 0) {
+    alert("Input 2 harus berupa angka positif.");
+    return;
+  }
+
+  if (isNaN(val3) || val3 <= 0) {
+    alert("Input 3 harus berupa angka positif.");
+    return;
+  }
+
+  input1 = val1;
+  input2 = val2;
+  input3 = val3;
+
   draw();
 }
+
 
 // Fungsi untuk menerapkan warna dari input
 function applyColor2d() {
@@ -107,12 +129,30 @@ function drawSelectedShape() {
     ctx.arc(0, 0, centerRadius, 0, Math.PI * 2);
     ctx.fill();
 
-  } else if (selectedShape === "jajargenjang") {
-    ctx.moveTo(0, 0);
-    ctx.lineTo(input1, 0);
-    ctx.lineTo(input1 - input3, input2);
-    ctx.lineTo(-input3, input2);
-    ctx.closePath();
+  } else if (selectedShape === "bintang") {
+ //conts spikes buat atur jumlah kakinya woy
+  const outerRadius = input1 / 2;
+  const innerRadius = input2 / 2;
+  const spikes = 5;
+
+  let rot = Math.PI / 2 * 3;
+  let cx = 0;
+  let cy = 0;
+  let step = Math.PI / spikes;
+
+  ctx.moveTo(cx, cy - outerRadius);
+  for (let i = 0; i < spikes; i++) {
+    let x = cx + Math.cos(rot) * outerRadius;
+    let y = cy + Math.sin(rot) * outerRadius;
+    ctx.lineTo(x, y);
+    rot += step;
+
+    x = cx + Math.cos(rot) * innerRadius;
+    y = cy + Math.sin(rot) * innerRadius;
+    ctx.lineTo(x, y);
+    rot += step;
+  }
+  ctx.closePath();
   }
 
   ctx.fillStyle = fillColor;

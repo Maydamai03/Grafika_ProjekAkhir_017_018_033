@@ -1,0 +1,49 @@
+.main-layout {
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+}
+
+.card-container {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.member-card {
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 250px;
+    text-align: center;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.member-card:hover {
+    transform: translateY(-5px);
+}
+
+.member-card img {
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+}
+
+.member-info {
+    padding: 16px;
+}
+
+.member-info h3 {
+    margin: 10px 0 5px;
+    font-size: 20px;
+}
+
+.member-info p {
+    margin: 0;
+    color: #555;
+}
+
+
+
