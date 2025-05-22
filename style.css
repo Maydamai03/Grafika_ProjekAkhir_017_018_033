@@ -408,15 +408,40 @@ button:active {
   transition: box-shadow 0.3s ease;
 }
 
-/* Responsive design improvements */
-@media (max-width: 768px) {
-  .main-layout {
-    grid-template-columns: 1fr;
-  }
-  
-  .controls-wrapper {
-    grid-template-columns: 1fr;
-  }
+/* Mouse control styles */
+.mouse-controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.mouse-controls button {
+  padding: 0.5rem;
+  font-weight: normal;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.mouse-controls button.active {
+  background: var(--primary);
+  color: var(--white);
+  border-color: var(--primary);
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Mouse control cursor styles */
+.canvas-translate {
+  cursor: move; /* Hand/grab cursor for translation mode */
+}
+
+.canvas-rotate {
+  cursor: all-scroll; /* Rotation cursor */
+}
+
+.canvas-scale {
+  cursor: nwse-resize; /* Diagonal resize cursor for scaling mode */
 }
 
 /* Loading overlay for 3D canvas */
@@ -444,10 +469,6 @@ button:active {
   color: var(--primary);
 }
 
-.canvas-wrapper {
-  position: relative;
-}
-
 /* Fade-in animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -465,3 +486,24 @@ button:active {
 .tool-section:nth-child(2) { animation-delay: 0.2s; }
 .tool-section:nth-child(3) { animation-delay: 0.3s; }
 .tool-section:nth-child(4) { animation-delay: 0.4s; }
+
+/* Add styles for keyboard shortcuts display */
+.shortcuts-info {
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+kbd {
+  background-color: #f7f7f7;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+  color: #333;
+  display: inline-block;
+  font-family: monospace;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 3px 6px;
+  margin: 0 2px;
+  white-space: nowrap;
+}

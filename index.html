@@ -82,7 +82,13 @@
                   <svg class="icon">
                     <use href="#reset-icon"></use>
                   </svg>
-                  Reset
+                  Reset Transformasi
+                </button>
+                <button onclick="resetAll2D()">
+                  <svg class="icon">
+                    <use href="#reset-icon"></use>
+                  </svg>
+                  Reset Semua
                 </button>
               </div>
             </div>
@@ -106,11 +112,17 @@
               </div>
               <canvas id="canvas3d" width="497" height="497"></canvas>
               <div class="canvas-controls">
+                <button onclick="resetTransform3d()">
+                  <svg class="icon">
+                    <use href="#reset-icon"></use>
+                  </svg>
+                  Reset Transformasi
+                </button>
                 <button onclick="resetAll()">
                   <svg class="icon">
                     <use href="#reset-icon"></use>
                   </svg>
-                  Reset
+                  Reset Semua
                 </button>
               </div>
             </div>
@@ -138,15 +150,15 @@
               <div class="tool-section">
                 <h3>Ukuran Bentuk</h3>
                 <div class="input-group">
-                  <label>Lebar X:</label>
+                  <label for="input1">Lebar X:</label>
                   <input id="input1" type="number" value="100" />
                 </div>
                 <div class="input-group">
-                  <label>Tinggi X:</label>
+                  <label for="input2">Tinggi X:</label>
                   <input id="input2" type="number" value="50" />
                 </div>
                 <div class="input-group">
-                  <label>Ketebalan Garis:</label>
+                  <label for="input3">Ketebalan Garis:</label>
                   <input id="input3" type="number" value="60" />
                 </div>
                 <button onclick="updateInput()">Terapkan Ukuran</button>
@@ -164,9 +176,56 @@
                   <button onclick="applyColor2d()">Terapkan Warna</button>
                 </div>
               </div>
+              
+              <div class="tool-section">
+                <h3>Outline</h3>
+                <div class="outline-controls">
+                  <button id="toggleOutline" onclick="toggleOutline()">Aktifkan Outline</button>
+                  <div class="input-group">
+                    <label for="input4">Ketebalan Outline:</label>
+                    <input id="input4" type="number" value="2" onchange="applyOutlineThickness()" />
+                  </div>
+                  <div class="color-picker">
+                    <input
+                      type="color"
+                      id="outlineColor"
+                      value="#000000"
+                      onchange="applyOutlineColor()"
+                    />
+                    <button onclick="applyOutlineColor()">Terapkan Warna Outline</button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="right-content-tools">
+              <div class="tool-section">
+                <h3>Kontrol Mouse</h3>
+                <div class="mouse-controls">
+                  <button id="translateMode" onclick="setMouseMode('translate')">
+                    <svg class="icon">
+                      <use href="#move-icon"></use>
+                    </svg>
+                    Mode Translasi
+                  </button>
+                  <button id="rotateMode" onclick="setMouseMode('rotate')">
+                    <svg class="icon">
+                      <use href="#rotate-icon"></use>
+                    </svg>
+                    Mode Rotasi
+                  </button>
+                  <button id="scaleMode" onclick="setMouseMode('scale')">
+                    <svg class="icon">
+                      <use href="#search-icon"></use>
+                    </svg>
+                    Mode Skala
+                  </button>
+                </div>
+                <div class="mode-info" style="font-size: 0.85rem; margin-top: 0.5rem; text-align: center; color: var(--secondary);">
+                  Klik dan seret pada kanvas untuk menggunakan mode yang dipilih
+                </div>
+              </div>
+
               <div class="tool-section">
                 <h3>Rotasi</h3>
                 <button onclick="rotate(-1)">
@@ -420,6 +479,39 @@
             console.log("Three.js berhasil dimuat");
           }
         }, 500);
+      });
+    </script>
+
+    <!-- Include this script at the end of the body to ensure reset functions are globally available -->
+    <script>
+      // Make reset functions globally available for both 2D and 3D
+      document.addEventListener('DOMContentLoaded', function() {
+        // Check if resetAll function exists from script3d.js
+        if (typeof resetAll === 'undefined') {
+          window.resetAll = function() {
+            console.log('Reset All 3D function not loaded yet');
+          };
+        }
+        
+        // Check if resetTransform3d function exists from script3d.js
+        if (typeof resetTransform3d === 'undefined') {
+          window.resetTransform3d = function() {
+            console.log('Reset Transform 3D function not loaded yet');
+          };
+        }
+        
+        // If reset2D functions don't exist, create placeholders
+        if (typeof resetTransform === 'undefined') {
+          window.resetTransform = function() {
+            console.log('Reset Transform 2D function not loaded yet');
+          };
+        }
+        
+        if (typeof resetAll2D === 'undefined') {
+          window.resetAll2D = function() {
+            console.log('Reset All 2D function not loaded yet');
+          };
+        }
       });
     </script>
   </body>
