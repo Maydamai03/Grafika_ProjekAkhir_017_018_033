@@ -12,6 +12,9 @@ let isTranslating = false;
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
 
+// Add activeObjectType variable to track the current object
+let activeObjectType = "cube"; // Default to cube
+
 // Inisialisasi scene
 function init() {
   console.log("Initializing 3D scene...");
@@ -231,6 +234,12 @@ function animate() {
       object.position.set(translation.x, translation.y, translation.z);
       object.scale.set(scale, scale, scale);
     }
+    
+    // Add occasional check for duplicate objects (every ~5 seconds)
+    if (Math.random() < 0.01) {
+      ensureSingleObject();
+    }
+    
     if (renderer && scene && camera) {
       renderer.render(scene, camera);
     } else {
@@ -241,9 +250,51 @@ function animate() {
   }
 }
 
+// Function to ensure only one object is in the scene
+function ensureSingleObject() {
+  if (!scene) return;
+  
+  // Count number of Mesh objects in scene
+  let meshCount = 0;
+  
+  scene.children.forEach(child => {
+    if (child.type === 'Mesh' && !child.userData.isHelper) {
+      meshCount++;
+    }
+  });
+  
+  // If more than one mesh, clean up extras
+  if (meshCount > 1) {
+    console.warn(`Found ${meshCount} meshes in scene, cleaning up extras`);
+    
+    // Keep track of objects to remove
+    const toRemove = [];
+    
+    scene.children.forEach(child => {
+      if (child.type === 'Mesh' && child !== object && !child.userData.isHelper) {
+        toRemove.push(child);
+      }
+    });
+    
+    // Remove extras
+    toRemove.forEach(child => {
+      console.log("Removing duplicate mesh:", child);
+      scene.remove(child);
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+    });
+  }
+}
+
 // Buat objek 3D - simplified and more robust
 window.createObject = function (type) {
   console.log(`Creating 3D object: ${type}`);
+  
+  // Update UI buttons to reflect current object selection
+  updateObjectSelectionUI(type);
+  
+  // Set the active object type
+  activeObjectType = type;
   
   // Verify scene exists
   if (!scene) {
@@ -320,6 +371,7 @@ window.createObject = function (type) {
     object = new THREE.Mesh(geometry, objectMaterial);
     object.castShadow = true;
     object.receiveShadow = true;
+    object.userData = { type: type }; // Store object type in userData for easier tracking
     
     console.log("Adding object to scene");
     scene.add(object);
@@ -376,19 +428,26 @@ window.updateSize = function () {
 
 // Reset semua
 window.resetAll = function () {
+  // Get current object type before reset
+  const currentType = activeObjectType;
+  console.log(`Resetting 3D object. Current type: ${currentType}`);
+  
+  // Reset dimensions and transforms
   objectWidth = 1;
   objectHeight = 2;
   scale = 1;
   translation = { x: 0, y: 0, z: 0 };
 
-  if (object) {
-    scene.remove(object);
-    createObject("cube");
-  }
-
+  // Reset UI inputs
   document.getElementById("inputWidth").value = 1;
   document.getElementById("inputHeight").value = 2;
   document.getElementById("color3d").value = "#00ff00";
+
+  // Recreate the current object type with default parameters
+  if (object) {
+    scene.remove(object);
+    createObject(currentType);
+  }
 };
 
 // Kontrol rotasi
@@ -879,6 +938,9 @@ window.init = function() {
     // Call original init with try/catch
     originalInit();
     
+    // Set default active object type
+    activeObjectType = "cube";
+    
     // Extra verification
     if (!scene || !camera || !renderer) {
       throw new Error("Failed to initialize 3D components");
@@ -889,6 +951,83 @@ window.init = function() {
     console.error("Critical error during 3D initialization:", error);
     alert("Error initializing 3D view. Please refresh the page.");
   }
+};
+
+// Function to update object selection UI
+function updateObjectSelectionUI(type) {
+  console.log(`Updating 3D object selection UI for: ${type}`);
+  
+  // Select buttons by their onclick attribute instead of ID
+  const buttons = document.querySelectorAll('#controls3d .tool-section:first-child button');
+  
+  // Reset all button styles
+  buttons.forEach(button => {
+    button.classList.remove("active");
+    button.style.backgroundColor = "";
+    button.style.color = "";
+  });
+  
+  // Find and highlight the selected button
+  buttons.forEach(button => {
+    // Extract object type from onclick attribute
+    const onclickValue = button.getAttribute('onclick') || '';
+    const match = onclickValue.match(/createObject\(['"]([^'"]+)['"]\)/);
+    
+    if (match && match[1] === type) {
+      button.classList.add("active");
+      // Apply direct styling to ensure the active state is visible
+      button.style.backgroundColor = "var(--primary, #333)";
+      button.style.color = "white";
+    }
+  });
+}
+
+// Add this function to add IDs to the buttons for easier selection
+function addObjectButtonIds() {
+  const buttonContainer = document.querySelector('#controls3d .tool-section:first-child');
+  if (!buttonContainer) return;
+  
+  // Get all buttons in the first tool section of controls3d
+  const buttons = buttonContainer.querySelectorAll('button');
+  
+  // Map of button texts to IDs
+  const buttonMap = {
+    'Kubus': 'cube3d',
+    'Tabung': 'tabung3d',
+    'Limas': 'limas3d'
+  };
+  
+  // Assign IDs based on button text
+  buttons.forEach(button => {
+    const text = button.textContent.trim();
+    if (buttonMap[text]) {
+      button.id = buttonMap[text];
+    }
+  });
+  
+  console.log("Added IDs to 3D object buttons");
+}
+
+// Add this to the window.addEventListener('DOMContentLoaded') section
+window.addEventListener('DOMContentLoaded', function() {
+  // ...existing code...
+  
+  // Add IDs to the buttons and ensure the initial selection is highlighted
+  setTimeout(() => {
+    addObjectButtonIds();
+    updateObjectSelectionUI(activeObjectType);
+  }, 800);
+});
+
+// Also call updateObjectSelectionUI from window.onload to ensure UI matches state
+const originalWindowOnload = window.onload;
+window.onload = function() {
+  if (typeof originalWindowOnload === 'function') {
+    originalWindowOnload();
+  }
+  
+  // Update the UI to match the active object type
+  updateObjectSelectionUI(activeObjectType);
 };
 
 //# sourceMappingURL=script3d.js.map
