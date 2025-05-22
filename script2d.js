@@ -438,6 +438,58 @@ function resetTransform() {
   draw();
 }
 
+// Add new comprehensive reset function for 2D
+function resetAll2D() {
+  // Reset transformations
+  angle = 0;
+  offsetX = 0;
+  offsetY = 0;
+  scale = 1;
+
+  // Reset shape to default (bendera/X)
+  selectedShape = "bendera";
+  updateSelectedButtonStyle();
+
+  // Reset ukuran bentuk ke default
+  input1 = 100; // lebar X
+  input2 = 50;  // tinggi X
+  input3 = 60;  // ketebalan garis
+  
+  // Reset warna
+  fillColor = "#ff0000";
+  document.getElementById("color2d").value = fillColor;
+  
+  // Reset outline
+  outlineColor = "#000000";
+  document.getElementById("outlineColor").value = outlineColor;
+  outlineWidth = 2;
+  showOutline = false;
+  
+  // Update toggle button appearance
+  const toggleBtn = document.getElementById("toggleOutline");
+  if (toggleBtn) {
+    toggleBtn.textContent = "Aktifkan Outline";
+    toggleBtn.classList.remove("active");
+  }
+
+  // Reset juga tampilan input di HTML
+  document.getElementById("input1").value = input1;
+  document.getElementById("input2").value = input2;
+  document.getElementById("input3").value = input3;
+  document.getElementById("input4").value = outlineWidth;
+
+  // Reset mouse mode to default (translate)
+  mouseMode = 'translate';
+  updateMouseModeUI();
+  updateCanvasCursor();
+  
+  // Update labels
+  updateInputLabels();
+  
+  // Redraw with all resets applied
+  draw();
+}
+
 // Function to set the mouse control mode
 function setMouseMode(mode) {
   mouseMode = mode;
@@ -522,7 +574,7 @@ canvas2d.addEventListener("mousemove", (e) => {
     case 'translate':
       // Standard translation
       offsetX += deltaX;
-      offsetY += dy;
+      offsetY += deltaY; // Bug fix: was 'dy' instead of 'deltaY'
       break;
       
     case 'rotate':

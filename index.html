@@ -70,6 +70,21 @@
           <button id="btn2D">2D</button>
           <button id="btn3D">3D</button>
         </div>
+        <!-- Tombol reset dipindahkan ke sini -->
+        <div class="reset-controls">
+          <button id="resetBtn2D" onclick="resetTransform()">
+            <svg class="icon">
+              <use href="#reset-icon"></use>
+            </svg>
+            Reset 2D
+          </button>
+          <button id="resetBtn3D" onclick="resetAll()" style="display: none;">
+            <svg class="icon">
+              <use href="#reset-icon"></use>
+            </svg>
+            Reset 3D
+          </button>
+        </div>
         <br />
 
         <!-- Section 2D -->
@@ -77,14 +92,7 @@
           <div class="section-layout">
             <div class="canvas-wrapper">
               <canvas id="canvas2d" width="497" height="497"></canvas>
-              <div class="canvas-controls">
-                <button onclick="resetTransform()">
-                  <svg class="icon">
-                    <use href="#reset-icon"></use>
-                  </svg>
-                  Reset
-                </button>
-              </div>
+              <!-- Removed canvas controls -->
             </div>
           </div>
         </div>
@@ -105,14 +113,7 @@
                 <p>Loading 3D Scene...</p>
               </div>
               <canvas id="canvas3d" width="497" height="497"></canvas>
-              <div class="canvas-controls">
-                <button onclick="resetAll()">
-                  <svg class="icon">
-                    <use href="#reset-icon"></use>
-                  </svg>
-                  Reset
-                </button>
-              </div>
+              <!-- Removed canvas controls -->
             </div>
           </div>
         </div>
@@ -419,6 +420,8 @@
       const btn3D = document.getElementById("btn3D");
       const controls2d = document.getElementById("controls2d");
       const controls3d = document.getElementById("controls3d");
+      const resetBtn2D = document.getElementById("resetBtn2D");
+      const resetBtn3D = document.getElementById("resetBtn3D");
 
       function showSection(id) {
         document.getElementById("section2d").style.display = "none";
@@ -433,6 +436,10 @@
         controls3d.classList.add("hidden");
         btn2D.classList.add("active");
         btn3D.classList.remove("active");
+        
+        // Show/hide reset buttons
+        resetBtn2D.style.display = "inline-block";
+        resetBtn3D.style.display = "none";
       }
 
       function switchTo3D() {
@@ -441,6 +448,10 @@
         controls3d.classList.remove("hidden");
         btn3D.classList.add("active");
         btn2D.classList.remove("active");
+        
+        // Show/hide reset buttons
+        resetBtn2D.style.display = "none";
+        resetBtn3D.style.display = "inline-block";
       }
 
       btn2D.addEventListener("click", switchTo2D);
@@ -458,16 +469,17 @@
       // Pastikan Three.js sudah di-load sebelum menjalankan script3d.js
       window.addEventListener("DOMContentLoaded", function () {
         // Menunggu sedikit agar Three.js bisa di-load dengan baik
-        setTimeout(() => {
-          console.log("Loading 3D module...");
-          // Kode tambahan untuk memverifikasi bahwa Three.js berhasil dimuat
-          if (typeof THREE === "undefined") {
-            console.error("Three.js library tidak berhasil dimuat");
-          } else {
-            console.log("Three.js berhasil dimuat");
-          }
-        }, 500);
-      });
-    </script>
-  </body>
-</html>
+        setTimeout(() => {ipt>
+          console.log("Loading 3D module...");y>
+          // Kode tambahan untuk memverifikasi bahwa Three.js berhasil dimuat</html>
+
+
+
+
+
+
+
+
+
+
+</html>  </body>      });        }, 500);          }            console.log("Three.js berhasil dimuat");          } else {            console.error("Three.js library tidak berhasil dimuat");          if (typeof THREE === "undefined") {
