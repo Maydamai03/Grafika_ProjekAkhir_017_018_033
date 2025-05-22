@@ -82,13 +82,7 @@
                   <svg class="icon">
                     <use href="#reset-icon"></use>
                   </svg>
-                  Reset Transformasi
-                </button>
-                <button onclick="resetAll2D()">
-                  <svg class="icon">
-                    <use href="#reset-icon"></use>
-                  </svg>
-                  Reset Semua
+                  Reset
                 </button>
               </div>
             </div>
@@ -112,17 +106,11 @@
               </div>
               <canvas id="canvas3d" width="497" height="497"></canvas>
               <div class="canvas-controls">
-                <button onclick="resetTransform3d()">
-                  <svg class="icon">
-                    <use href="#reset-icon"></use>
-                  </svg>
-                  Reset Transformasi
-                </button>
                 <button onclick="resetAll()">
                   <svg class="icon">
                     <use href="#reset-icon"></use>
                   </svg>
-                  Reset Semua
+                  Reset
                 </button>
               </div>
             </div>
@@ -479,39 +467,6 @@
             console.log("Three.js berhasil dimuat");
           }
         }, 500);
-      });
-    </script>
-
-    <!-- Include this script at the end of the body to ensure reset functions are globally available -->
-    <script>
-      // Make reset functions globally available for both 2D and 3D
-      document.addEventListener('DOMContentLoaded', function() {
-        // Check if resetAll function exists from script3d.js
-        if (typeof resetAll === 'undefined') {
-          window.resetAll = function() {
-            console.log('Reset All 3D function not loaded yet');
-          };
-        }
-        
-        // Check if resetTransform3d function exists from script3d.js
-        if (typeof resetTransform3d === 'undefined') {
-          window.resetTransform3d = function() {
-            console.log('Reset Transform 3D function not loaded yet');
-          };
-        }
-        
-        // If reset2D functions don't exist, create placeholders
-        if (typeof resetTransform === 'undefined') {
-          window.resetTransform = function() {
-            console.log('Reset Transform 2D function not loaded yet');
-          };
-        }
-        
-        if (typeof resetAll2D === 'undefined') {
-          window.resetAll2D = function() {
-            console.log('Reset All 2D function not loaded yet');
-          };
-        }
       });
     </script>
   </body>
