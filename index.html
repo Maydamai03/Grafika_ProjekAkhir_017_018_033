@@ -3,8 +3,55 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Grafika 2D 3D</title>
+    <title>Grafika 2D/3D | Interactive Graphics</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // Helper function to use SVG icons
+      function loadSVGIcons() {
+        // Create a hidden div to store all SVG code
+        const iconStorage = document.createElement("div");
+        iconStorage.style.display = "none";
+        document.body.appendChild(iconStorage);
+
+        // List of icon files to load
+        const icons = [
+          "arrow-up",
+          "arrow-down",
+          "arrow-left",
+          "arrow-right",
+          "reset",
+          "rotate",
+          "search",
+          "move",
+          "loading",
+          "error",
+        ];
+
+        // Load each icon
+        icons.forEach((iconName) => {
+          fetch(`icons/${iconName}.svg`)
+            .then((response) => response.text())
+            .then((svgText) => {
+              const parser = new DOMParser();
+              const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
+              const svg = svgDoc.querySelector("svg");
+              svg.id = `${iconName}-icon`;
+              iconStorage.appendChild(svg);
+            })
+            .catch((err) =>
+              console.error(`Failed to load icon: ${iconName}`, err)
+            );
+        });
+      }
+
+      // Call this when document is loaded
+      document.addEventListener("DOMContentLoaded", loadSVGIcons);
+    </script>
   </head>
 
   <body>
@@ -29,8 +76,15 @@
         <div id="section2d" class="section">
           <div class="section-layout">
             <div class="canvas-wrapper">
-              <canvas id="canvas2d" width="497" height="497"></canvas><br />
-              <button onclick="resetTransform()">Reset 🔄</button>
+              <canvas id="canvas2d" width="497" height="497"></canvas>
+              <div class="canvas-controls">
+                <button onclick="resetTransform()">
+                  <svg class="icon">
+                    <use href="#reset-icon"></use>
+                  </svg>
+                  Reset
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -39,8 +93,26 @@
         <div id="section3d" class="section" style="display: none">
           <div class="section-layout">
             <div class="canvas-wrapper">
-              <canvas id="canvas3d" width="500" height="500"></canvas><br />
-              <button onclick="resetAll()">Reset 🔄</button>
+              <div id="loading3d" class="loading-overlay">
+                <svg
+                  class="loading-icon"
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                >
+                  <use href="#loading-icon"></use>
+                </svg>
+                <p>Loading 3D Scene...</p>
+              </div>
+              <canvas id="canvas3d" width="497" height="497"></canvas>
+              <div class="canvas-controls">
+                <button onclick="resetAll()">
+                  <svg class="icon">
+                    <use href="#reset-icon"></use>
+                  </svg>
+                  Reset
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -54,142 +126,240 @@
           <!-- Kontrol 2D -->
           <div id="controls2d" class="controls-wrapper">
             <div class="left-content-tools">
-              <h3>Pilih Bentuk</h3>
-              <button onclick="setShape('bendera')">Bendera</button>
-              <button onclick="setShape('semicircle')">
-                Setengah Lingkaran
-              </button>
-              <button onclick="setShape('donut')">Donut</button>
-              <br />
-              <br />
-              <h3>Ukuran Bentuk</h3>
-              <div class="input-group">
-                <label>Sisi/Radius 1:</label>
-                <input id="input1" type="number" value="100" />
+              <div class="tool-section">
+                <h3>Pilih Bentuk</h3>
+                <button onclick="setShape('bendera')">Huruf X</button>
+                <button onclick="setShape('semicircle')">
+                  Setengah Lingkaran
+                </button>
+                <button onclick="setShape('donut')">Donut</button>
               </div>
-              <div class="input-group">
-                <label>Sisi/Radius 2:</label>
-                <input id="input2" type="number" value="50" />
-              </div>
-              <div class="input-group">
-                <label>Sisi/Radius 3:</label>
-                <input id="input3" type="number" value="60" />
-              </div>
-              <button onclick="updateInput()">Terapkan Ukuran</button>
 
-              <br />
-              <br />
-              <h3>Warna</h3>
-              <input
-                type="color"
-                id="color2d"
-                value="#ff0000"
-                onchange="applyColor2d()"
-              />
+              <div class="tool-section">
+                <h3>Ukuran Bentuk</h3>
+                <div class="input-group">
+                  <label>Lebar X:</label>
+                  <input id="input1" type="number" value="100" />
+                </div>
+                <div class="input-group">
+                  <label>Tinggi X:</label>
+                  <input id="input2" type="number" value="50" />
+                </div>
+                <div class="input-group">
+                  <label>Ketebalan Garis:</label>
+                  <input id="input3" type="number" value="60" />
+                </div>
+                <button onclick="updateInput()">Terapkan Ukuran</button>
+              </div>
+
+              <div class="tool-section">
+                <h3>Warna</h3>
+                <div class="color-picker">
+                  <input
+                    type="color"
+                    id="color2d"
+                    value="#ff0000"
+                    onchange="applyColor2d()"
+                  />
+                  <button onclick="applyColor2d()">Terapkan Warna</button>
+                </div>
+              </div>
             </div>
 
             <div class="right-content-tools">
-              <h3>Rotasi</h3>
-              <button onclick="rotate(-1)">⟲ Kiri</button>
-              <button onclick="rotate(1)">⟳ Kanan</button>
+              <div class="tool-section">
+                <h3>Rotasi</h3>
+                <button onclick="rotate(-1)">
+                  <svg class="icon">
+                    <use href="#rotate-icon"></use>
+                  </svg>
+                  Rotasi Kiri
+                </button>
+                <button onclick="rotate(1)">
+                  <svg class="icon">
+                    <use href="#rotate-icon"></use>
+                  </svg>
+                  Rotasi Kanan
+                </button>
+              </div>
 
-              <br />
-              <br />
-              <h3>Translasi</h3>
-              <div class="direction-grid">
-                <div class="grid-center">
-                  <button onclick="move(0, -10)">⬆️</button>
-                </div>
-                <div class="grid-row">
-                  <button onclick="move(-10, 0)">⬅️</button>
-                  <button onclick="move(10, 0)">➡️</button>
-                </div>
-                <div class="grid-center">
-                  <button onclick="move(0, 10)">⬇️</button>
+              <div class="tool-section">
+                <h3>Translasi</h3>
+                <div class="direction-grid">
+                  <div class="grid-center">
+                    <button onclick="move(0, -10)">
+                      <svg class="icon">
+                        <use href="#arrow-up-icon"></use>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="grid-row">
+                    <button onclick="move(-10, 0)">
+                      <svg class="icon">
+                        <use href="#arrow-left-icon"></use>
+                      </svg>
+                    </button>
+                    <button onclick="move(10, 0)">
+                      <svg class="icon">
+                        <use href="#arrow-right-icon"></use>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="grid-center">
+                    <button onclick="move(0, 10)">
+                      <svg class="icon">
+                        <use href="#arrow-down-icon"></use>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <br />
-              <br />
-              <h3>Skala</h3>
-              <button onclick="changeScale(0.1)">Perbesar 🔍</button> <br />
-              <button onclick="changeScale(-0.1)">Perkecil 🔎</button>
+              <div class="tool-section">
+                <h3>Skala</h3>
+                <button onclick="changeScale(0.1)">
+                  <svg class="icon">
+                    <use href="#search-icon"></use>
+                  </svg>
+                  Perbesar
+                </button>
+                <button onclick="changeScale(-0.1)">
+                  <svg class="icon">
+                    <use href="#search-icon"></use>
+                  </svg>
+                  Perkecil
+                </button>
+              </div>
             </div>
           </div>
 
           <!-- Kontrol 3D -->
           <div id="controls3d" class="controls-wrapper hidden">
             <div class="left-content-tools">
-              <h3>Pilih Objek</h3>
-              <button onclick="createObject('cube')">Kubus</button>
-              <button onclick="createObject('tabung')">Tabung</button>
-              <button onclick="createObject('limas')">Limas</button>
-              <br />
-              <br />
-              <h3>Ukuran Objek</h3>
-              <div class="input-group">
-                <label>Lebar/Diameter:</label>
-                <input id="inputWidth" type="number" value="1" step="0.1" />
+              <div class="tool-section">
+                <h3>Pilih Objek</h3>
+                <button onclick="createObject('cube')">Kubus</button>
+                <button onclick="createObject('tabung')">Tabung</button>
+                <button onclick="createObject('limas')">Limas</button>
               </div>
-              <div class="input-group">
-                <label>Tinggi:</label>
-                <input id="inputHeight" type="number" value="2" step="0.1" />
-              </div>
-              <button onclick="updateSize()">Terapkan Ukuran</button>
 
-              <br />
-              <br />
-              <h3>Warna Objek</h3>
-              <input
-                type="color"
-                id="color3d"
-                value="#00ff00"
-                onchange="applyColor3d()"
-              />
+              <div class="tool-section">
+                <h3>Kontrol Mouse</h3>
+                <button id="toggleModeBtn" onclick="toggleTranslationMode()">
+                  <svg class="icon">
+                    <use href="#rotate-icon"></use>
+                  </svg>
+                  Mode: Rotasi
+                </button>
+              </div>
+
+              <div class="tool-section">
+                <h3>Ukuran Objek</h3>
+                <div class="input-group">
+                  <label>Lebar/Diameter:</label>
+                  <input id="inputWidth" type="number" value="1" step="0.1" />
+                </div>
+                <div class="input-group">
+                  <label>Tinggi:</label>
+                  <input id="inputHeight" type="number" value="2" step="0.1" />
+                </div>
+                <button onclick="updateSize()">Terapkan Ukuran</button>
+              </div>
+
+              <div class="tool-section">
+                <h3>Warna Objek</h3>
+                <div class="color-picker">
+                  <input
+                    type="color"
+                    id="color3d"
+                    value="#00ff00"
+                    onchange="applyColor3d()"
+                  />
+                  <button onclick="applyColor3d()">Terapkan Warna</button>
+                </div>
+              </div>
             </div>
 
             <div class="right-content-tools">
-              <h3>Rotasi</h3>
-              <button onclick="rotate3d('up')" style="margin-left: 22px">
-                ⬆️</button
-              ><br />
-              <button onclick="rotate3d('left')">⬅️</button>
-              <button onclick="rotate3d('right')" style="margin-left: 18px">
-                ➡️</button
-              ><br />
-              <button onclick="rotate3d('down')" style="margin-left: 22px">
-                ⬇️
-              </button>
-
-              <br />
-              <br />
-              <h3>Translasi</h3>
-              <div class="direction-grid">
-                <div class="grid-center">
-                  <button onclick="translate3d('up')">⬆️</button>
-                </div>
-                <div class="grid-row">
-                  <button onclick="translate3d('left')">⬅️</button>
-                  <button onclick="translate3d('right')">➡️</button>
-                </div>
-                <div class="grid-center">
-                  <button onclick="translate3d('down')">⬇️</button>
+              <div class="tool-section">
+                <h3>Rotasi</h3>
+                <div class="direction-grid">
+                  <div class="grid-center">
+                    <button onclick="rotate3d('up')">
+                      <svg class="icon">
+                        <use href="#arrow-up-icon"></use>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="grid-row">
+                    <button onclick="rotate3d('left')">
+                      <svg class="icon">
+                        <use href="#arrow-left-icon"></use>
+                      </svg>
+                    </button>
+                    <button onclick="rotate3d('right')">
+                      <svg class="icon">
+                        <use href="#arrow-right-icon"></use>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="grid-center">
+                    <button onclick="rotate3d('down')">
+                      <svg class="icon">
+                        <use href="#arrow-down-icon"></use>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <br />
-              <br />
-              <h3>Skala</h3>
-              <button onclick="scale3d(0.1)">Perbesar 🔍</button>
-              <button onclick="scale3d(-0.1)">Perkecil 🔎</button>
+              <div class="tool-section">
+                <h3>Translasi</h3>
+                <div class="direction-grid">
+                  <div class="grid-center">
+                    <button onclick="translate3d('up')">
+                      <svg class="icon">
+                        <use href="#arrow-up-icon"></use>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="grid-row">
+                    <button onclick="translate3d('left')">
+                      <svg class="icon">
+                        <use href="#arrow-left-icon"></use>
+                      </svg>
+                    </button>
+                    <button onclick="translate3d('right')">
+                      <svg class="icon">
+                        <use href="#arrow-right-icon"></use>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="grid-center">
+                    <button onclick="translate3d('down')">
+                      <svg class="icon">
+                        <use href="#arrow-down-icon"></use>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-              <br />
-              <br />
-
-              <h3>Kontrol Mouse</h3>
-              <button id="toggleModeBtn" onclick="toggleTranslationMode()">
-                Mode: Rotasi 🖱️
-              </button>
+              <div class="tool-section">
+                <h3>Skala</h3>
+                <button onclick="scale3d(0.1)">
+                  <svg class="icon">
+                    <use href="#search-icon"></use>
+                  </svg>
+                  Perbesar
+                </button>
+                <button onclick="scale3d(-0.1)">
+                  <svg class="icon">
+                    <use href="#search-icon"></use>
+                  </svg>
+                  Perkecil
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -237,5 +407,20 @@
     <!-- Script fungsional 2D & 3D -->
     <script src="script2d.js"></script>
     <script type="module" src="script3d.js"></script>
+    <script>
+      // Pastikan Three.js sudah di-load sebelum menjalankan script3d.js
+      window.addEventListener("DOMContentLoaded", function () {
+        // Menunggu sedikit agar Three.js bisa di-load dengan baik
+        setTimeout(() => {
+          console.log("Loading 3D module...");
+          // Kode tambahan untuk memverifikasi bahwa Three.js berhasil dimuat
+          if (typeof THREE === "undefined") {
+            console.error("Three.js library tidak berhasil dimuat");
+          } else {
+            console.log("Three.js berhasil dimuat");
+          }
+        }, 500);
+      });
+    </script>
   </body>
 </html>

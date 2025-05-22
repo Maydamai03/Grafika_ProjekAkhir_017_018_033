@@ -17,13 +17,16 @@ let lastMousePos2d = {
 };
 
 // Input ukuran sisi
-let input1 = 100; // sisi/diameter
-let input2 = 50; // tinggi/jari-jari kecil
-let input3 = 60; // sisi miring atau tambahan dimensi
+let input1 = 100; // lebar huruf X
+let input2 = 50;  // tinggi huruf X
+let input3 = 60;  // ketebalan garis (dibagi 10)
 
 // --- Fungsi utama ---
 function setShape(shape) {
   selectedShape = shape;
+  // Reset position to center when shape is changed
+  offsetX = 0;
+  offsetY = 0;
   draw();
 }
 
@@ -96,29 +99,29 @@ function drawSelectedShape() {
   if (selectedShape === "bendera") {
     const width = input1;
     const height = input2;
-    const poleHeight = input3;
-
-    // Tiang bendera
-    ctx.moveTo(-width / 2, -height);
-    ctx.lineTo(-width / 2, poleHeight);
-    ctx.lineWidth = 5;
+    const lineWidth = input3 / 10; // Menggunakan input3 untuk ketebalan garis
+    
+    // Membuat X simetris dengan menggunakan nilai maksimum dari width dan height
+    const size = Math.max(width, height);
+    
+    // Mengatur ketebalan garis
+    ctx.lineWidth = lineWidth;
+    
+    // Menggambar huruf X simetris
+    // Garis dari kiri atas ke kanan bawah
+    ctx.moveTo(-size / 2, -size / 2);
+    ctx.lineTo(size / 2, size / 2);
+    
+    // Garis dari kanan atas ke kiri bawah
+    ctx.moveTo(size / 2, -size / 2);
+    ctx.lineTo(-size / 2, size / 2);
+    
+    // Mengatur warna
+    ctx.strokeStyle = fillColor;
     ctx.stroke();
+    
+    // Reset line width
     ctx.lineWidth = 1;
-
-    // Kain bendera
-    ctx.beginPath();
-    ctx.rect(-width / 2, -height, width, height);
-
-    // Menggambar bagian merah (atas)
-    ctx.fillStyle = "#FF0000";
-    ctx.fillRect(-width / 2, -height, width, height / 2);
-
-    // Menggambar bagian putih (bawah)
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(-width / 2, -height / 2, width, height / 2);
-
-    ctx.strokeStyle = "#000";
-    ctx.stroke();
     return; // Skip default fill
   } else if (selectedShape === "semicircle") {
     // Gambar setengah lingkaran
