@@ -1,199 +1,241 @@
 <!DOCTYPE html>
 <html lang="id">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Grafika 2D 3D</title>
     <link rel="stylesheet" href="style.css" />
-</head>
+  </head>
 
-<body>
+  <body>
     <nav class="navbar">
-        <div class="navbar-left">GRAFIKA 2D 3D</div>
-        <div class="navbar-right">
-            <a href="anggota.html">Anggota Kelompok</a>
-            <a href="#">Bantuan</a>
-        </div>
+      <div class="navbar-left">GRAFIKA 2D 3D</div>
+      <div class="navbar-right">
+        <a href="anggota.html">Anggota Kelompok</a>
+      </div>
     </nav>
 
     <main class="main-layout">
-        <!-- Section kiri: tombol switch -->
-        <section class="left-section">
-            <h2>Pilih Objek</h2>
-            <div class="switch-toggle">
-                <button id="btn2D">2D</button>
-                <button id="btn3D">3D</button>
+      <!-- Section kiri: tombol switch -->
+      <section class="left-section">
+        <h2>Pilih Objek</h2>
+        <div class="switch-toggle">
+          <button id="btn2D">2D</button>
+          <button id="btn3D">3D</button>
+        </div>
+        <br />
+
+        <!-- Section 2D -->
+        <div id="section2d" class="section">
+          <div class="section-layout">
+            <div class="canvas-wrapper">
+              <canvas id="canvas2d" width="497" height="497"></canvas><br />
+              <button onclick="resetTransform()">Reset 🔄</button>
             </div>
-            <br />
+          </div>
+        </div>
 
-            <!-- Section 2D -->
-            <div id="section2d" class="section">
-                <div class="section-layout">
-                    <div class="canvas-wrapper">
-                        <canvas id="canvas2d" width="497" height="497"></canvas><br />
-                        <button onclick="resetTransform()">Reset 🔄</button>
-                    </div>
-                </div>
+        <!-- Section 3D -->
+        <div id="section3d" class="section" style="display: none">
+          <div class="section-layout">
+            <div class="canvas-wrapper">
+              <canvas id="canvas3d" width="500" height="500"></canvas><br />
+              <button onclick="resetAll()">Reset 🔄</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section kanan: kontrol -->
+      <section class="right-section">
+        <div class="tools-card">
+          <h2>Tools</h2>
+
+          <!-- Kontrol 2D -->
+          <div id="controls2d" class="controls-wrapper">
+            <div class="left-content-tools">
+              <h3>Pilih Bentuk</h3>
+              <button onclick="setShape('bendera')">Bendera</button>
+              <button onclick="setShape('semicircle')">
+                Setengah Lingkaran
+              </button>
+              <button onclick="setShape('donut')">Donut</button>
+              <br />
+              <br />
+              <h3>Ukuran Bentuk</h3>
+              <div class="input-group">
+                <label>Sisi/Radius 1:</label>
+                <input id="input1" type="number" value="100" />
+              </div>
+              <div class="input-group">
+                <label>Sisi/Radius 2:</label>
+                <input id="input2" type="number" value="50" />
+              </div>
+              <div class="input-group">
+                <label>Sisi/Radius 3:</label>
+                <input id="input3" type="number" value="60" />
+              </div>
+              <button onclick="updateInput()">Terapkan Ukuran</button>
+
+              <br />
+              <br />
+              <h3>Warna</h3>
+              <input
+                type="color"
+                id="color2d"
+                value="#ff0000"
+                onchange="applyColor2d()"
+              />
             </div>
 
-            <!-- Section 3D -->
-            <div id="section3d" class="section" style="display: none;">
-                <div class="section-layout">
-                    <div class="canvas-wrapper">
-                        <canvas id="canvas3d" width="500" height="500"></canvas><br />
-                        <button onclick="resetAll()">Reset 🔄</button>
-                    </div>
+            <div class="right-content-tools">
+              <h3>Rotasi</h3>
+              <button onclick="rotate(-1)">⟲ Kiri</button>
+              <button onclick="rotate(1)">⟳ Kanan</button>
+
+              <br />
+              <br />
+              <h3>Translasi</h3>
+              <div class="direction-grid">
+                <div class="grid-center">
+                  <button onclick="move(0, -10)">⬆️</button>
                 </div>
+                <div class="grid-row">
+                  <button onclick="move(-10, 0)">⬅️</button>
+                  <button onclick="move(10, 0)">➡️</button>
+                </div>
+                <div class="grid-center">
+                  <button onclick="move(0, 10)">⬇️</button>
+                </div>
+              </div>
+
+              <br />
+              <br />
+              <h3>Skala</h3>
+              <button onclick="changeScale(0.1)">Perbesar 🔍</button> <br />
+              <button onclick="changeScale(-0.1)">Perkecil 🔎</button>
             </div>
-        </section>
+          </div>
 
-        <!-- Section kanan: kontrol -->
-        <section class="right-section">
-            <div class="tools-card">
-                <h2>Tools</h2>
+          <!-- Kontrol 3D -->
+          <div id="controls3d" class="controls-wrapper hidden">
+            <div class="left-content-tools">
+              <h3>Pilih Objek</h3>
+              <button onclick="createObject('cube')">Kubus</button>
+              <button onclick="createObject('tabung')">Tabung</button>
+              <button onclick="createObject('limas')">Limas</button>
+              <br />
+              <br />
+              <h3>Ukuran Objek</h3>
+              <div class="input-group">
+                <label>Lebar/Diameter:</label>
+                <input id="inputWidth" type="number" value="1" step="0.1" />
+              </div>
+              <div class="input-group">
+                <label>Tinggi:</label>
+                <input id="inputHeight" type="number" value="2" step="0.1" />
+              </div>
+              <button onclick="updateSize()">Terapkan Ukuran</button>
 
-                <!-- Kontrol 2D -->
-                <div id="controls2d" class="controls-wrapper">
-                    <div class="left-content-tools">
-                        <h3>Pilih Bentuk</h3>
-                        <button onclick="setShape('rumah')">Rumah</button>
-                        <button onclick="setShape('nuklir')">Nuklir</button>
-                        <button onclick="setShape('bintang')">Bintang</button>
-                        <br> <br>
-
-                        <h3>Ukuran Bentuk</h3>
-                        <label>Sisi/Radius 1:</label>
-                        <input id="input1" type="number" value="100" /> <br>
-                        <label>Sisi/Radius 2:</label>
-                        <input id="input2" type="number" value="50" /> <br>
-                        <label>Sisi/Radius 3:</label>
-                        <input id="input3" type="number" value="60" /> <br> <br>
-                        <button onclick="updateInput()">Terapkan Ukuran</button>
-
-                        <br> <br>
-
-                        <h3>Warna</h3>
-                        <input type="color" id="color2d" value="#ff0000" />
-                        <button onclick="applyColor2d()">Terapkan Warna</button>
-                    </div>
-
-                    <div class="right-content-tools">
-                        <h3>Rotasi</h3>
-                        <button onclick="rotate(-1)">⟲ Kiri</button>
-                        <button onclick="rotate(1)">⟳ Kanan</button>
-
-                        <br> <br>
-
-                        <h3>Translasi</h3>
-                        <button onclick="move(0, -10)" style="margin-left: 22px;">⬆️</button><br />
-                        <button onclick="move(-10, 0)">⬅️</button>
-                        <button onclick="move(10, 0)" style="margin-left: 18px;">➡️</button><br />
-                        <button onclick="move(0, 10)" style="margin-left: 22px;">⬇️</button>
-
-                        <br> <br>
-                        <h3>Skala</h3>
-                        <button onclick="changeScale(0.1)">Perbesar 🔍</button> <br>
-                        <button onclick="changeScale(-0.1)">Perkecil 🔎</button>
-                    </div>
-                </div>
-
-                <!-- Kontrol 3D -->
-                <div id="controls3d" class="controls-wrapper hidden">
-                    <div class="left-content-tools">
-                        <h3>Pilih Objek</h3>
-                        <button onclick="createObject('cube')">Kubus</button>
-                        <button onclick="createObject('tabung')">Tabung</button>
-                        <button onclick="createObject('limas')">Limas</button>
-                        <br> <br>
-
-                        <h3>Ukuran Objek</h3>
-                        <label>Lebar/Diameter:</label>
-                        <input id="inputWidth" type="number" value="1" step="0.1" /> <br>
-                        <label>Tinggi:</label>
-                        <input id="inputHeight" type="number" value="2" step="0.1" /> <br> <br>
-                        <button onclick="updateSize()">Terapkan Ukuran</button>
-
-                        <br> <br>
-
-                        <h3>Warna Objek</h3>
-                        <input type="color" id="color3d" value="#00ff00" />
-                        <button onclick="applyColor3d()">Terapkan Warna</button>
-                    </div>
-
-                    <div class="right-content-tools">
-                        <h3>Rotasi</h3>
-                        <button onclick="rotate3d('up')" style="margin-left: 22px;">⬆️</button><br />
-                        <button onclick="rotate3d('left')">⬅️</button>
-                        <button onclick="rotate3d('right')" style="margin-left: 18px;">➡️</button><br />
-                        <button onclick="rotate3d('down')" style="margin-left: 22px;">⬇️</button>
-
-                        <br> <br>
-
-                        <h3>Translasi</h3>
-
-                        <button onclick="translate3d('up')" style="margin-left: 22px;">⬆️</button><br />
-                        <button onclick="translate3d('left')">⬅️</button>
-                        <button onclick="translate3d('right')" style="margin-left: 18px;">➡️</button><br />
-                        <button onclick="translate3d('down')" style="margin-left: 22px;">⬇️</button>
-
-                        <br> <br>
-                        <h3>Skala</h3>
-                        <button onclick="scale3d(0.1)">Perbesar 🔍</button>
-                        <button onclick="scale3d(-0.1)">Perkecil 🔎</button>
-
-                        <br> <br>
-
-                        <h3>Kontrol Mouse</h3>
-                        <button id="toggleModeBtn" onclick="toggleTranslationMode()">Mode: Rotasi 🖱️</button>
-                    </div>
-                </div>
+              <br />
+              <br />
+              <h3>Warna Objek</h3>
+              <input
+                type="color"
+                id="color3d"
+                value="#00ff00"
+                onchange="applyColor3d()"
+              />
             </div>
-        </section>
+
+            <div class="right-content-tools">
+              <h3>Rotasi</h3>
+              <button onclick="rotate3d('up')" style="margin-left: 22px">
+                ⬆️</button
+              ><br />
+              <button onclick="rotate3d('left')">⬅️</button>
+              <button onclick="rotate3d('right')" style="margin-left: 18px">
+                ➡️</button
+              ><br />
+              <button onclick="rotate3d('down')" style="margin-left: 22px">
+                ⬇️
+              </button>
+
+              <br />
+              <br />
+              <h3>Translasi</h3>
+              <div class="direction-grid">
+                <div class="grid-center">
+                  <button onclick="translate3d('up')">⬆️</button>
+                </div>
+                <div class="grid-row">
+                  <button onclick="translate3d('left')">⬅️</button>
+                  <button onclick="translate3d('right')">➡️</button>
+                </div>
+                <div class="grid-center">
+                  <button onclick="translate3d('down')">⬇️</button>
+                </div>
+              </div>
+
+              <br />
+              <br />
+              <h3>Skala</h3>
+              <button onclick="scale3d(0.1)">Perbesar 🔍</button>
+              <button onclick="scale3d(-0.1)">Perkecil 🔎</button>
+
+              <br />
+              <br />
+
+              <h3>Kontrol Mouse</h3>
+              <button id="toggleModeBtn" onclick="toggleTranslationMode()">
+                Mode: Rotasi 🖱️
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <!-- Script inisialisasi -->
     <script>
-    const btn2D = document.getElementById("btn2D");
-    const btn3D = document.getElementById("btn3D");
-    const controls2d = document.getElementById("controls2d");
-    const controls3d = document.getElementById("controls3d");
+      const btn2D = document.getElementById("btn2D");
+      const btn3D = document.getElementById("btn3D");
+      const controls2d = document.getElementById("controls2d");
+      const controls3d = document.getElementById("controls3d");
 
-    function showSection(id) {
+      function showSection(id) {
         document.getElementById("section2d").style.display = "none";
         document.getElementById("section3d").style.display = "none";
         document.getElementById(id).style.display = "block";
-    }
+      }
 
-    function switchTo2D() {
+      function switchTo2D() {
         console.log("switchTo2D dipanggil");
         showSection("section2d");
         controls2d.classList.remove("hidden");
         controls3d.classList.add("hidden");
         btn2D.classList.add("active");
         btn3D.classList.remove("active");
-    }
+      }
 
-    function switchTo3D() {
+      function switchTo3D() {
         showSection("section3d");
         controls2d.classList.add("hidden");
         controls3d.classList.remove("hidden");
         btn3D.classList.add("active");
         btn2D.classList.remove("active");
-    }
+      }
 
-    btn2D.addEventListener("click", switchTo2D);
-    btn3D.addEventListener("click", switchTo3D);
+      btn2D.addEventListener("click", switchTo2D);
+      btn3D.addEventListener("click", switchTo3D);
 
-    document.addEventListener("DOMContentLoaded", () => {
+      document.addEventListener("DOMContentLoaded", () => {
         switchTo2D();
-    });
-</script>
-
+      });
+    </script>
 
     <!-- Script fungsional 2D & 3D -->
     <script src="script2d.js"></script>
     <script type="module" src="script3d.js"></script>
-</body>
-
+  </body>
 </html>

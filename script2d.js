@@ -2,7 +2,7 @@ const canvas2d = document.getElementById("canvas2d");
 const ctx = canvas2d.getContext("2d");
 
 // State
-let selectedShape = "rumah";
+let selectedShape = "bendera";
 let angle = 0;
 let offsetX = 0;
 let offsetY = 0;
@@ -13,7 +13,7 @@ let fillColor = "#ff0000"; // Warna default merah
 let isDragging2d = false;
 let lastMousePos2d = {
   x: 0,
-  y: 0
+  y: 0,
 };
 
 // Input ukuran sisi
@@ -71,7 +71,6 @@ function updateInput() {
   draw();
 }
 
-
 // Fungsi untuk menerapkan warna dari input
 function applyColor2d() {
   const colorInput = document.getElementById("color2d");
@@ -94,69 +93,54 @@ function draw() {
 
 function drawSelectedShape() {
   ctx.beginPath();
-
-  if (selectedShape === "rumah") {
-    // Gambar rumah simpel: kotak + atap segitiga
-
-    // Kotak rumah
+  if (selectedShape === "bendera") {
     const width = input1;
     const height = input2;
-    ctx.rect(-width / 2, 0, width, height);
+    const poleHeight = input3;
 
-    // Atap segitiga
-    ctx.moveTo(-width / 2, 0);
-    ctx.lineTo(0, -input3); // input3 jadi tinggi atap
-    ctx.lineTo(width / 2, 0);
-    ctx.closePath();
-  } else if (selectedShape === "nuklir") {
-    const radius = input1;
-    const centerRadius = input2;
-    const bladeWidth = input3;
+    // Tiang bendera
+    ctx.moveTo(-width / 2, -height);
+    ctx.lineTo(-width / 2, poleHeight);
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.lineWidth = 1;
 
-    // Gambar 3 baling-baling (sector)
-    for (let i = 0; i < 3; i++) {
-      const angle = i * (2 * Math.PI / 3);
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.arc(0, 0, radius, angle - bladeWidth / 2 / radius, angle + bladeWidth / 2 / radius);
-      ctx.closePath();
-      ctx.fillStyle = fillColor;
-      ctx.fill();
-    }
-
-    // Gambar lingkaran tengah
+    // Kain bendera
     ctx.beginPath();
-    ctx.arc(0, 0, centerRadius, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.rect(-width / 2, -height, width, height);
 
-  } else if (selectedShape === "bintang") {
- //conts spikes buat atur jumlah kakinya woy
-  const outerRadius = input1 / 2;
-  const innerRadius = input2 / 2;
-  const spikes = 5;
+    // Menggambar bagian merah (atas)
+    ctx.fillStyle = "#FF0000";
+    ctx.fillRect(-width / 2, -height, width, height / 2);
 
-  let rot = Math.PI / 2 * 3;
-  let cx = 0;
-  let cy = 0;
-  let step = Math.PI / spikes;
+    // Menggambar bagian putih (bawah)
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(-width / 2, -height / 2, width, height / 2);
 
-  ctx.moveTo(cx, cy - outerRadius);
-  for (let i = 0; i < spikes; i++) {
-    let x = cx + Math.cos(rot) * outerRadius;
-    let y = cy + Math.sin(rot) * outerRadius;
-    ctx.lineTo(x, y);
-    rot += step;
+    ctx.strokeStyle = "#000";
+    ctx.stroke();
+    return; // Skip default fill
+  } else if (selectedShape === "semicircle") {
+    // Gambar setengah lingkaran
+    const radius = input1;
+    ctx.arc(0, 0, radius, 0, Math.PI, true);
+    ctx.closePath();
+  } else if (selectedShape === "donut") {
+    // Gambar donut (dua lingkaran)
+    const outerRadius = input1;
+    const innerRadius = input2;
 
-    x = cx + Math.cos(rot) * innerRadius;
-    y = cy + Math.sin(rot) * innerRadius;
-    ctx.lineTo(x, y);
-    rot += step;
-  }
-  ctx.closePath();
+    // Lingkaran luar
+    ctx.arc(0, 0, outerRadius, 0, Math.PI * 2);
+
+    // Lingkaran dalam (berlawanan arah jarum jam untuk membuat lubang)
+    ctx.moveTo(innerRadius, 0);
+    ctx.arc(0, 0, innerRadius, 0, Math.PI * 2, true);
   }
 
   ctx.fillStyle = fillColor;
   ctx.fill();
+  ctx.stroke(); // Adding stroke to make the details visible
 }
 
 // Fungsi reset transformasi dan input
@@ -183,13 +167,11 @@ function resetTransform() {
   draw();
 }
 
-
-
 canvas2d.addEventListener("mousedown", (e) => {
   isDragging2d = true;
   lastMousePos2d = {
     x: e.clientX,
-    y: e.clientY
+    y: e.clientY,
   };
 });
 
@@ -212,7 +194,7 @@ canvas2d.addEventListener("mousemove", (e) => {
 
   lastMousePos2d = {
     x: e.clientX,
-    y: e.clientY
+    y: e.clientY,
   };
 
   draw();
