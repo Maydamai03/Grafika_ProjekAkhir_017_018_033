@@ -48,39 +48,91 @@ function init() {
     fillLight.position.set(-5, 0, -5);
     scene.add(fillLight);
 
+    // Improved mouse controls with better event handling
     canvas.addEventListener("mousedown", (e) => {
+      if (!object) return;
+      
       isDragging = true;
-      previousMousePosition = { x: e.clientX, y: e.clientY };
+      
+      // Use clientX/Y and calculate relative position to canvas
+      const rect = canvas.getBoundingClientRect();
+      previousMousePosition = { 
+        x: e.clientX - rect.left, 
+        y: e.clientY - rect.top 
+      };
+      
+      // Change cursor style based on current mode
+      canvas.style.cursor = isTranslating ? "move" : "grabbing";
+      
+      console.log("3D Mouse down:", previousMousePosition, "Mode:", isTranslating ? "Translating" : "Rotating");
     });
 
     canvas.addEventListener("mouseup", () => {
       isDragging = false;
+      // Reset cursor based on current mode
+      canvas.style.cursor = isTranslating ? "grab" : "default";
+      console.log("3D Mouse up");
+    });
+
+    canvas.addEventListener("mouseleave", () => {
+      if (isDragging) {
+        isDragging = false;
+        canvas.style.cursor = isTranslating ? "grab" : "default";
+        console.log("3D Mouse leave");
+      }
     });
 
     canvas.addEventListener("mousemove", (e) => {
       if (!isDragging || !object) return;
 
-      const deltaMove = {
-        x: e.clientX - previousMousePosition.x,
-        y: e.clientY - previousMousePosition.y,
+      // Use clientX/Y and calculate relative position to canvas
+      const rect = canvas.getBoundingClientRect();
+      const currentPosition = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
       };
 
-      const deltaX = deltaMove.x * 0.01;
-      const deltaY = deltaMove.y * 0.01;
+      const deltaMove = {
+        x: currentPosition.x - previousMousePosition.x,
+        y: currentPosition.y - previousMousePosition.y,
+      };
 
-      if (isTranslating) {
-        translation.x += deltaX;
-        translation.y -= deltaY;
-      } else {
-        object.rotation.y += deltaX;
-        object.rotation.x += deltaY;
+      // Simple logging to debug movement
+      if (Math.abs(deltaMove.x) > 1 || Math.abs(deltaMove.y) > 1) {
+        console.log("3D Mouse move delta:", deltaMove, "Mode:", isTranslating ? "Translating" : "Rotating");
       }
 
-      previousMousePosition = { x: e.clientX, y: e.clientY };
+      // Scale movements based on canvas size
+      const canvasSize = Math.min(canvas.width, canvas.height);
+      const sensitivityFactor = 2 / canvasSize;
+      
+      if (isTranslating) {
+        // Direct translation (scaled appropriately)
+        translation.x += deltaMove.x * sensitivityFactor * 2;
+        translation.y -= deltaMove.y * sensitivityFactor * 2; // Invert Y axis
+      } else {
+        // Rotation (y-axis for horizontal mouse movement, x-axis for vertical)
+        object.rotation.y += deltaMove.x * sensitivityFactor * 2;
+        object.rotation.x += deltaMove.y * sensitivityFactor * 2;
+      }
+
+      previousMousePosition = currentPosition;
     });
 
+    // Add mouse wheel event for scaling with Ctrl key
+    canvas.addEventListener("wheel", (e) => {
+      if (e.ctrlKey && object) {
+        e.preventDefault();
+        const scaleFactor = e.deltaY > 0 ? -0.1 : 0.1;
+        scale3d(scaleFactor);
+      }
+    });
+
+    // Add keyboard event listeners
+    document.addEventListener('keydown', handleKeyDown);
+
     animate();
-    createObject("cube");
+    createObject("cube"); // Create default object
     
     // Hide loading screen
     const loadingElement = document.getElementById("loading3d");
@@ -98,62 +150,208 @@ function init() {
         <svg class="icon" style="color: #ff0000; width: 40px; height: 40px;">
           <use href="#error-icon"></use>
         </svg>
-        <p>Error loading 3D scene. Please refresh the page.</p>
+        <p>Error loading 3D scene: ${error.message}</p>
+        <button onclick="init()" class="retry-button">Try Again</button>
       `;
+      loadingElement.style.display = "flex";
     }
   }
 }
 
-// Loop render
-function animate() {
-  requestAnimationFrame(animate);
-  if (object) {
-    object.position.set(translation.x, translation.y, translation.z);
-    object.scale.set(scale, scale, scale);
+// Add keyboard controls handler
+function handleKeyDown(e) {
+  // Skip if we're in an input field
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  
+  // Skip if 2D mode is active
+  if (document.getElementById('section3d').style.display === 'none') return;
+  
+  const step = 0.4; // Translation step
+  const rotationStep = 0.1; // Rotation step
+  
+  // Translation with arrow keys
+  if (!e.ctrlKey && !e.shiftKey) {
+    switch (e.key) {
+      case 'ArrowUp':
+        e.preventDefault();
+        translation.y += step;
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        translation.y -= step;
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        translation.x -= step;
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        translation.x += step;
+        break;
+    }
   }
-  renderer.render(scene, camera);
+  
+  // Rotation with Ctrl+Shift+Arrow keys
+  if (e.ctrlKey && e.shiftKey) {
+    switch (e.key) {
+      case 'ArrowUp':
+        e.preventDefault();
+        if (object) object.rotation.x -= rotationStep;
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        if (object) object.rotation.x += rotationStep;
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        if (object) object.rotation.y -= rotationStep;
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        if (object) object.rotation.y += rotationStep;
+        break;
+    }
+    
+    // Scale with Ctrl+Shift++ and Ctrl+Shift+-
+    if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      scale3d(0.1);
+    } else if (e.key === '-' || e.key === '_') {
+      e.preventDefault();
+      scale3d(-0.1);
+    }
+  }
 }
 
-// Buat objek 3D
+// Loop render with better error handling
+function animate() {
+  requestAnimationFrame(animate);
+  try {
+    if (object) {
+      object.position.set(translation.x, translation.y, translation.z);
+      object.scale.set(scale, scale, scale);
+    }
+    if (renderer && scene && camera) {
+      renderer.render(scene, camera);
+    } else {
+      console.warn("Renderer, scene or camera not initialized in animation loop");
+    }
+  } catch (error) {
+    console.error("Error in animation loop:", error);
+  }
+}
+
+// Buat objek 3D - simplified and more robust
 window.createObject = function (type) {
-  if (!["cube", "tabung", "limas"].includes(type)) return;
-
-  if (object) scene.remove(object);
-
-  // Reset translation to center the new object
-  translation = { x: 0, y: 0, z: 0 };
-
-  let geometry;
-  if (type === "cube") {
-    geometry = new THREE.BoxGeometry(objectWidth, objectHeight, objectWidth);
-  } else if (type === "tabung") {
-    geometry = new THREE.CylinderGeometry(
-      objectWidth,
-      objectWidth,
-      objectHeight,
-      32
-    );
-  } else if (type === "limas") {
-    geometry = new THREE.ConeGeometry(objectWidth, objectHeight, 4);
+  console.log(`Creating 3D object: ${type}`);
+  
+  // Verify scene exists
+  if (!scene) {
+    console.error("Cannot create object: Scene not initialized");
+    return;
+  }
+  
+  if (!["cube", "tabung", "limas"].includes(type)) {
+    console.error(`Invalid object type: ${type}`);
+    return;
   }
 
-  const colorValue = document.getElementById("color3d").value || "#00ff00";
-  const isValidHex = /^#([0-9A-Fa-f]{3}){1,2}$/.test(colorValue);
+  try {
+    // Remove existing object if any
+    if (object) {
+      console.log("Removing existing object from scene");
+      scene.remove(object);
+      // Dispose of geometry and material to prevent memory leaks
+      if (object.geometry) object.geometry.dispose();
+      if (object.material) object.material.dispose();
+    }
 
-  objectMaterial = new THREE.MeshPhysicalMaterial({
-    color: new THREE.Color(isValidHex ? colorValue : "#00ff00"),
-    metalness: 0.2,
-    roughness: 0.5,
-    reflectivity: 0.5,
-    clearcoat: 0.3,
-    clearcoatRoughness: 0.25,
-  });
+    // Reset translation to center the new object
+    translation = { x: 0, y: 0, z: 0 };
+    
+    console.log(`Creating geometry for ${type} with width=${objectWidth}, height=${objectHeight}`);
+    
+    // Create geometry with fallback values if dimensions are invalid
+    const safeWidth = isNaN(objectWidth) || objectWidth <= 0 ? 1 : objectWidth;
+    const safeHeight = isNaN(objectHeight) || objectHeight <= 0 ? 2 : objectHeight;
+    
+    let geometry;
+    if (type === "cube") {
+      geometry = new THREE.BoxGeometry(safeWidth, safeHeight, safeWidth);
+    } else if (type === "tabung") {
+      geometry = new THREE.CylinderGeometry(
+        safeWidth,
+        safeWidth,
+        safeHeight,
+        32
+      );
+    } else if (type === "limas") {
+      geometry = new THREE.ConeGeometry(safeWidth, safeHeight, 4);
+    }
 
-  object = new THREE.Mesh(geometry, objectMaterial);
-  object.castShadow = true;
-  object.receiveShadow = true;
-  scene.add(object);
-  resetTransform3d();
+    if (!geometry) {
+      throw new Error(`Failed to create geometry for ${type}`);
+    }
+
+    // Get color with fallback
+    let colorValue = "#00ff00"; // Default fallback color
+    try {
+      const colorInput = document.getElementById("color3d");
+      if (colorInput && colorInput.value) {
+        const inputColor = colorInput.value;
+        if (/^#([0-9A-Fa-f]{3}){1,2}$/.test(inputColor)) {
+          colorValue = inputColor;
+        }
+      }
+    } catch (colorError) {
+      console.warn("Error getting color, using default:", colorError);
+    }
+
+    console.log(`Creating material with color ${colorValue}`);
+    
+    // Create material with simpler properties to avoid issues
+    objectMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(colorValue),
+      metalness: 0.2,
+      roughness: 0.7,
+    });
+
+    // Create the mesh and add to scene
+    object = new THREE.Mesh(geometry, objectMaterial);
+    object.castShadow = true;
+    object.receiveShadow = true;
+    
+    console.log("Adding object to scene");
+    scene.add(object);
+    
+    // Reset transform
+    resetTransform3d();
+    
+    // Force a render
+    renderer.render(scene, camera);
+    
+    console.log(`Object ${type} created successfully`);
+    
+    // Hide any error messages that might be showing
+    const loadingElement = document.getElementById("loading3d");
+    if (loadingElement) {
+      loadingElement.style.display = "none";
+    }
+  } catch (error) {
+    console.error(`Error creating object ${type}:`, error);
+    
+    // Show error to user
+    const loadingElement = document.getElementById("loading3d");
+    if (loadingElement) {
+      loadingElement.innerHTML = `
+        <div style="background: rgba(255,0,0,0.1); padding: 10px; border-radius: 5px; text-align: center;">
+          <p>Error creating 3D object: ${error.message}</p>
+          <button onclick="createObject('cube')" style="padding: 5px 10px; margin-top: 5px;">Try Again</button>
+        </div>
+      `;
+      loadingElement.style.display = "flex";
+    }
+  }
 };
 
 // Ukuran objek
@@ -241,11 +439,11 @@ window.applyColor3d = function () {
   }
 };
 
-// Toggle mode mouse
+// Toggle mode mouse - Fixed implementation
 window.toggleTranslationMode = function () {
   isTranslating = !isTranslating;
   const button = document.getElementById("toggleModeBtn");
-  const iconUse = button.querySelector('use');
+  const canvas = document.getElementById("canvas3d");
   
   if (isTranslating) {
     button.innerHTML = `
@@ -254,6 +452,10 @@ window.toggleTranslationMode = function () {
       </svg>
       Mode: Translasi
     `;
+    // Update cursor for current mode
+    if (canvas) {
+      canvas.style.cursor = "grab";
+    }
   } else {
     button.innerHTML = `
       <svg class="icon">
@@ -261,8 +463,279 @@ window.toggleTranslationMode = function () {
       </svg>
       Mode: Rotasi
     `;
+    // Update cursor for current mode
+    if (canvas) {
+      canvas.style.cursor = "default";
+    }
+  }
+  
+  console.log("3D Mouse mode changed to:", isTranslating ? "Translasi" : "Rotasi");
+};
+
+// Add this function for direct mode setting instead of toggling
+window.setMouseMode3D = function(mode) {
+  // Set mode directly rather than toggling
+  if ((mode === 'translate' && !isTranslating) || 
+      (mode === 'rotate' && isTranslating)) {
+    toggleTranslationMode(); // Use existing toggle function
   }
 };
+
+// Call this function when the document is loaded - fixed timing
+window.addEventListener('DOMContentLoaded', function() {
+  // Shorter delay for initial controls setup
+  setTimeout(() => {
+    addKeyboardShortcutsInfo3D();
+    addCanvasCursorStyles();
+    
+    // Try to add controls immediately
+    if (!addMouseControls3D()) {
+      // If failed, try again with longer delay
+      console.log("First attempt to add 3D controls failed, retrying...");
+      setTimeout(() => {
+        addMouseControls3D();
+      }, 2000);
+    }
+    
+    // Initialize the UI to match the default mode (not translating)
+    if (document.getElementById("toggleModeBtn")) {
+      document.getElementById("toggleModeBtn").innerHTML = `
+        <svg class="icon">
+          <use href="#rotate-icon"></use>
+        </svg>
+        Mode: Rotasi
+      `;
+    }
+  }, 500); // Reduced delay for faster response
+});
+
+// Add mouse control buttons to the 3D controls - improved with fallbacks
+function addMouseControls3D() {
+  console.log("Adding 3D mouse controls...");
+  
+  // Try multiple possible selectors to find the control container
+  let controlsSection = document.querySelector('#controls3d .left-content-tools .tool-section:nth-child(2)');
+  
+  // First fallback - try any tool section in left content
+  if (!controlsSection) {
+    console.log("Primary selector failed, trying first fallback...");
+    controlsSection = document.querySelector('#controls3d .left-content-tools .tool-section');
+  }
+  
+  // Second fallback - create a new section if none found
+  if (!controlsSection) {
+    console.log("All selectors failed, creating new container...");
+    const leftTools = document.querySelector('#controls3d .left-content-tools');
+    
+    if (leftTools) {
+      controlsSection = document.createElement('div');
+      controlsSection.classList.add('tool-section');
+      controlsSection.innerHTML = '<h3>Mouse Controls</h3>';
+      leftTools.appendChild(controlsSection);
+    } else {
+      console.error("Could not find or create controls container");
+      return false;
+    }
+  }
+  
+  // Log the found container
+  console.log("Control section found:", controlsSection);
+  
+  // Preserve existing title or create new one
+  let title = controlsSection.querySelector('h3');
+  if (!title) {
+    title = document.createElement('h3');
+    title.textContent = 'Mouse Controls';
+    controlsSection.appendChild(title);
+  }
+  
+  // Clear existing content but keep the title
+  controlsSection.innerHTML = '';
+  controlsSection.appendChild(title);
+  
+  // Add rotate and translate buttons with improved styling
+  const controlsHTML = `
+    <div class="mouse-controls" style="display: flex; gap: 10px; margin-bottom: 10px;">
+      <button id="translateMode3D" onclick="setMouseMode3D('translate')" style="flex: 1; padding: 8px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+        <svg class="icon" style="width: 16px; height: 16px;">
+          <use href="#move-icon"></use>
+        </svg>
+        <span>Translasi</span>
+      </button>
+      <button id="rotateMode3D" onclick="setMouseMode3D('rotate')" style="flex: 1; padding: 8px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+        <svg class="icon" style="width: 16px; height: 16px;">
+          <use href="#rotate-icon"></use>
+        </svg>
+        <span>Rotasi</span>
+      </button>
+    </div>
+    <div class="mode-info" style="font-size: 0.85rem; margin-top: 0.5rem; text-align: center; color: var(--secondary, #666);">
+      Klik dan seret pada kanvas untuk menggunakan mode yang dipilih.<br>
+      Anda juga dapat menggunakan keyboard untuk kontrol.
+    </div>
+  `;
+  
+  // Add the HTML to the container
+  controlsSection.insertAdjacentHTML('beforeend', controlsHTML);
+  
+  // Set current mode active
+  setTimeout(() => {
+    const translateButton = document.getElementById('translateMode3D');
+    const rotateButton = document.getElementById('rotateMode3D');
+    
+    if (translateButton && rotateButton) {
+      if (isTranslating) {
+        translateButton.classList.add('active');
+        rotateButton.classList.remove('active');
+      } else {
+        rotateButton.classList.add('active');
+        translateButton.classList.remove('active');
+      }
+    }
+  }, 100);
+  
+  console.log("3D mouse controls added successfully");
+  return true;
+}
+
+// Alternative approach - create floating controls if needed
+function addFloatingMouseControls() {
+  console.log("Adding floating mouse controls");
+  
+  const canvas = document.getElementById("canvas3d");
+  if (!canvas) {
+    console.error("Cannot add floating controls - canvas not found");
+    return false;
+  }
+  
+  // Create container for controls
+  const controlsContainer = document.createElement('div');
+  controlsContainer.classList.add('floating-controls');
+  controlsContainer.style.cssText = `
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.8);
+    padding: 5px 10px;
+    border-radius: 20px;
+    display: flex;
+    gap: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 10;
+  `;
+  
+  // Add buttons
+  controlsContainer.innerHTML = `
+    <button id="floatingTranslate" title="Mode Translasi" onclick="setMouseMode3D('translate')" style="background: none; border: none; cursor: pointer; padding: 5px;">
+      <svg style="width: 24px; height: 24px; fill: currentColor;">
+        <use href="#move-icon"></use>
+      </svg>
+    </button>
+    <button id="floatingRotate" title="Mode Rotasi" onclick="setMouseMode3D('rotate')" style="background: none; border: none; cursor: pointer; padding: 5px;">
+      <svg style="width: 24px; height: 24px; fill: currentColor;">
+        <use href="#rotate-icon"></use>
+      </svg>
+    </button>
+  `;
+  
+  // Add to canvas container
+  const canvasParent = canvas.parentElement;
+  if (canvasParent) {
+    canvasParent.style.position = 'relative';
+    canvasParent.appendChild(controlsContainer);
+    
+    // Highlight active mode
+    const translateBtn = document.getElementById('floatingTranslate');
+    const rotateBtn = document.getElementById('floatingRotate');
+    
+    if (isTranslating) {
+      translateBtn.style.color = '#0066cc';
+      rotateBtn.style.color = '#333333';
+    } else {
+      rotateBtn.style.color = '#0066cc';
+      translateBtn.style.color = '#333333';
+    }
+    
+    return true;
+  }
+  
+  return false;
+}
+
+// Update the setMouseMode3D function to work with any UI setup
+window.setMouseMode3D = function(mode) {
+  console.log("Setting 3D mouse mode to:", mode);
+  
+  // Determine if we need to toggle
+  const shouldBeTranslating = (mode === 'translate');
+  if (shouldBeTranslating !== isTranslating) {
+    isTranslating = shouldBeTranslating;
+    
+    // Update cursor on canvas
+    const canvas = document.getElementById("canvas3d");
+    if (canvas) {
+      canvas.style.cursor = isTranslating ? (isDragging ? "move" : "grab") : (isDragging ? "grabbing" : "default");
+    }
+    
+    // Update mode button if it exists
+    const toggleBtn = document.getElementById("toggleModeBtn");
+    if (toggleBtn) {
+      toggleBtn.innerHTML = isTranslating ? 
+        `<svg class="icon"><use href="#move-icon"></use></svg> Mode: Translasi` :
+        `<svg class="icon"><use href="#rotate-icon"></use></svg> Mode: Rotasi`;
+    }
+    
+    // Update UI buttons - regular UI
+    const translateButton = document.getElementById('translateMode3D');
+    const rotateButton = document.getElementById('rotateMode3D');
+    
+    if (translateButton && rotateButton) {
+      if (isTranslating) {
+        translateButton.classList.add('active');
+        rotateButton.classList.remove('active');
+      } else {
+        rotateButton.classList.add('active');
+        translateButton.classList.remove('active');
+      }
+    }
+    
+    // Update floating UI if it exists
+    const floatingTranslate = document.getElementById('floatingTranslate');
+    const floatingRotate = document.getElementById('floatingRotate');
+    
+    if (floatingTranslate && floatingRotate) {
+      if (isTranslating) {
+        floatingTranslate.style.color = '#0066cc';
+        floatingRotate.style.color = '#333333';
+      } else {
+        floatingRotate.style.color = '#0066cc';
+        floatingTranslate.style.color = '#333333';
+      }
+    }
+    
+    console.log("3D mouse mode changed to:", isTranslating ? "Translasi" : "Rotasi");
+  }
+};
+
+// Ensure both UI approaches are initialized on load
+window.addEventListener('load', function() {
+  // Delay initialization slightly to ensure DOM is fully loaded
+  setTimeout(() => {
+    // Check if scene is already initialized
+    if (!scene || !renderer) {
+      console.log("Reinitializing 3D scene...");
+      init();
+    }
+    
+    // Try regular controls first
+    if (!addMouseControls3D()) {
+      // Fallback to floating controls if regular ones fail
+      console.log("Regular controls failed, adding floating controls");
+      addFloatingMouseControls();
+    }
+  }, 1000);
+});
 
 // Explicitly make all functions available to the window object
 window.createObject = createObject;
@@ -275,11 +748,147 @@ window.resetTransform3d = resetTransform3d;
 window.applyColor3d = applyColor3d;
 window.toggleTranslationMode = toggleTranslationMode;
 
-// Make sure init is called when window is loaded
-if (document.readyState === "loading") {
-  window.addEventListener("DOMContentLoaded", init);
-} else {
-  init();
-}
+// Add a utility function to check the scene status
+window.checkSceneStatus = function() {
+  console.log("Checking 3D Scene Status:");
+  console.log("- Scene initialized:", !!scene);
+  console.log("- Camera initialized:", !!camera);
+  console.log("- Renderer initialized:", !!renderer);
+  console.log("- Object created:", !!object);
+  
+  if (object) {
+    console.log("- Object type:", object.geometry.type);
+    console.log("- Object position:", object.position);
+    console.log("- Object visible:", object.visible);
+    console.log("- Object in scene:", scene.children.includes(object));
+  }
+  
+  if (renderer && scene && camera) {
+    console.log("- Attempting to force render");
+    renderer.render(scene, camera);
+  }
+  
+  return {
+    sceneReady: !!scene,
+    cameraReady: !!camera,
+    rendererReady: !!renderer,
+    objectReady: !!object,
+    objectDetails: object ? {
+      type: object.geometry.type,
+      position: object.position,
+      visible: object.visible,
+      inScene: scene.children.includes(object)
+    } : null
+  };
+};
 
-console.log("3D script loaded successfully");
+// Add a debug mode toggle
+window.toggleDebugMode = function() {
+  const isDebugMode = document.body.classList.toggle('debug-mode');
+  
+  if (isDebugMode && scene) {
+    // Add helper elements when in debug mode
+    const axesHelper = new THREE.AxesHelper(5);
+    axesHelper.userData.isHelper = true;
+    scene.add(axesHelper);
+    
+    const gridHelper = new THREE.GridHelper(10, 10);
+    gridHelper.userData.isHelper = true;
+    scene.add(gridHelper);
+    
+    console.log("Debug mode activated - added helpers to scene");
+  } else if (scene) {
+    // Remove helpers when leaving debug mode
+    scene.children.forEach(child => {
+      if (child.userData && child.userData.isHelper) {
+        scene.remove(child);
+      }
+    });
+    console.log("Debug mode deactivated - removed helpers from scene");
+  }
+  
+  return isDebugMode;
+};
+
+// Add an emergency reinitialize function
+window.reinitialize3D = function() {
+  console.log("Performing emergency 3D reinitialization");
+  
+  // Clean up existing resources
+  if (renderer) {
+    renderer.dispose();
+    renderer = null;
+  }
+  
+  if (object) {
+    if (object.geometry) object.geometry.dispose();
+    if (object.material) object.material.dispose();
+    object = null;
+  }
+  
+  // Clear scene
+  if (scene) {
+    while(scene.children.length > 0) { 
+      const child = scene.children[0];
+      scene.remove(child);
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+    }
+    scene = null;
+  }
+  
+  camera = null;
+  
+  // Reinitialize everything
+  console.log("Starting fresh initialization");
+  init();
+  
+  // Create default object
+  setTimeout(() => {
+    createObject("cube");
+  }, 100);
+  
+  return "Reinitialization complete";
+};
+
+// Modify existing init function to be more robust (add this at the beginning)
+const originalInit = init;
+window.init = function() {
+  console.log("Starting 3D initialization with robust error handling");
+  
+  try {
+    // Clear previous state if any
+    if (renderer) {
+      console.log("Disposing previous renderer");
+      renderer.dispose();
+    }
+    
+    if (object) {
+      console.log("Disposing previous object");
+      if (object.geometry) object.geometry.dispose();
+      if (object.material) object.material.dispose();
+    }
+    
+    if (scene) {
+      console.log("Clearing previous scene");
+      while(scene.children.length > 0) { 
+        scene.remove(scene.children[0]);
+      }
+    }
+    
+    // Call original init with try/catch
+    originalInit();
+    
+    // Extra verification
+    if (!scene || !camera || !renderer) {
+      throw new Error("Failed to initialize 3D components");
+    }
+    
+    console.log("3D initialization completed successfully");
+  } catch (error) {
+    console.error("Critical error during 3D initialization:", error);
+    alert("Error initializing 3D view. Please refresh the page.");
+  }
+};
+
+//# sourceMappingURL=script3d.js.map

@@ -293,12 +293,7 @@
 
               <div class="tool-section">
                 <h3>Kontrol Mouse</h3>
-                <button id="toggleModeBtn" onclick="toggleTranslationMode()">
-                  <svg class="icon">
-                    <use href="#rotate-icon"></use>
-                  </svg>
-                  Mode: Rotasi
-                </button>
+                <!-- The buttons will be dynamically added by JavaScript -->
               </div>
 
               <div class="tool-section">
@@ -408,6 +403,56 @@
                   Perkecil
                 </button>
               </div>
+              
+              <!-- Tutorial Keyboard Controls for 3D -->
+              <div class="tool-section">
+                <h3>Keyboard Shortcuts</h3>
+                <div class="keyboard-tutorial" style="font-size: 0.9rem; color: var(--text-color);">
+                  <div style="margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                    <strong>Translasi:</strong>
+                    <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px;">
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">↑</kbd>
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">↓</kbd>
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">←</kbd>
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">→</kbd>
+                    </div>
+                  </div>
+                  
+                  <div style="margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                    <strong>Rotasi:</strong>
+                    <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px;">
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">Ctrl</kbd> + 
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">Shift</kbd> + 
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">↑</kbd>
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">↓</kbd>
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">←</kbd>
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">→</kbd>
+                    </div>
+                  </div>
+                  
+                  <div style="margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                    <strong>Skala:</strong>
+                    <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px;">
+                      <span>Perbesar: <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">Ctrl</kbd> + 
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">Shift</kbd> + 
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">+</kbd></span>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px;">
+                      <span>Perkecil: <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">Ctrl</kbd> + 
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">Shift</kbd> + 
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">-</kbd></span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <strong>Mouse + Keyboard:</strong>
+                    <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px;">
+                      <span>Zoom: <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">Ctrl</kbd> + 
+                      <kbd style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 5px; font-size: 0.8rem;">Mouse Wheel</kbd></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -469,17 +514,28 @@
       // Pastikan Three.js sudah di-load sebelum menjalankan script3d.js
       window.addEventListener("DOMContentLoaded", function () {
         // Menunggu sedikit agar Three.js bisa di-load dengan baik
-        setTimeout(() => {ipt>
-          console.log("Loading 3D module...");y>
-          // Kode tambahan untuk memverifikasi bahwa Three.js berhasil dimuat</html>
-
-
-
-
-
-
-
-
-
-
-</html>  </body>      });        }, 500);          }            console.log("Three.js berhasil dimuat");          } else {            console.error("Three.js library tidak berhasil dimuat");          if (typeof THREE === "undefined") {
+        setTimeout(() => {
+          console.log("Loading 3D module...");
+          
+          // Verifikasi loading Three.js
+          if (typeof THREE !== "undefined") {
+            console.log("Three.js berhasil dimuat");
+          } else {
+            console.error("Three.js library tidak berhasil dimuat");
+            
+            // Tampilkan pesan error jika Three.js gagal dimuat
+            const loadingElement = document.getElementById("loading3d");
+            if (loadingElement) {
+              loadingElement.innerHTML = `
+                <svg class="icon" style="color: #ff0000; width: 40px; height: 40px;">
+                  <use href="#error-icon"></use>
+                </svg>
+                <p>Error: Three.js tidak dapat dimuat. Refresh halaman atau periksa koneksi internet.</p>
+              `;
+            }
+          }
+        }, 500);
+      });
+    </script>
+  </body>
+</html>

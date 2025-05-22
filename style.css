@@ -620,23 +620,77 @@ button:active {
 .tool-section:nth-child(3) { animation-delay: 0.3s; }
 .tool-section:nth-child(4) { animation-delay: 0.4s; }
 
-/* Add styles for keyboard shortcuts display */
+/* Enhanced styling for keyboard shortcuts section */
 .shortcuts-info {
   font-size: 0.9rem;
   line-height: 1.6;
+  background-color: #f8f8f8;
+  border-radius: 4px;
+  padding: 10px;
+  border-left: 3px solid var(--primary);
+}
+
+.shortcuts-info p {
+  margin-bottom: 8px;
 }
 
 kbd {
-  background-color: #f7f7f7;
+  background-color: #f0f0f0;
   border: 1px solid #ccc;
   border-radius: 3px;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 0 0 2px #fff inset;
   color: #333;
   display: inline-block;
   font-family: monospace;
   font-size: 0.85rem;
+  font-weight: bold;
   line-height: 1;
   padding: 3px 6px;
   margin: 0 2px;
   white-space: nowrap;
+  text-shadow: 0 1px 0 #fff;
+}
+
+/* Add a subtle highlight effect for the active keyboard shortcut */
+@keyframes keyHighlight {
+  0% { background-color: rgba(255, 255, 0, 0.3); }
+  100% { background-color: transparent; }
+}
+
+.key-pressed {
+  animation: keyHighlight 0.5s ease-out;
+}
+
+/* Improved 3D mouse cursor styles */
+#canvas3d {
+  cursor: default;
+  transition: cursor 0.1s;
+}
+
+#canvas3d.translating {
+  cursor: grab;
+}
+
+#canvas3d.translating:active {
+  cursor: grabbing;
+}
+
+#canvas3d.rotating {
+  cursor: default;
+}
+
+#canvas3d.rotating:active {
+  cursor: grabbing;
+}
+
+/* Debug button styling */
+.debug-button {
+  background-color: #ff9800 !important;
+  color: white !important;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+}
+
+.debug-button:hover {
+  background-color: #f57c00 !important;
 }

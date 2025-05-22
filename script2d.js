@@ -572,9 +572,9 @@ canvas2d.addEventListener("mousemove", (e) => {
 
   switch (mouseMode) {
     case 'translate':
-      // Standard translation
+      // Fix: Changed 'dy' to 'deltaY' - this was causing the translation issue
       offsetX += deltaX;
-      offsetY += deltaY; // Bug fix: was 'dy' instead of 'deltaY'
+      offsetY += deltaY;
       break;
       
     case 'rotate':
@@ -634,11 +634,22 @@ let canvasCenter = { x: 0, y: 0 };
 
 // Initialize mouse control UI on page load
 document.addEventListener('DOMContentLoaded', function() {
+  // Make sure canvas and context are properly initialized
+  if (!ctx) {
+    console.error("Canvas 2D context is not available");
+    return;
+  }
+  
   updateInputLabels(); // Set initial input labels
   updateSelectedButtonStyle(); // Set initial button styles
   updateMouseModeUI();
   updateCanvasCursor();
-  draw();
+  
+  // Initial shape selection and drawing
+  setShape('bendera'); // Start with default shape
+  draw(); // Make sure we draw something initially
+  
+  console.log("2D canvas initialized");
 });
 
 // Add keyboard controls
