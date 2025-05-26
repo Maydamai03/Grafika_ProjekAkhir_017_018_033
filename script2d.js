@@ -409,6 +409,8 @@ function resetTransform() {
     input3 = 20;  // ketebalan garis
   }
 
+  
+
   // Reset warna
   fillColor = "#ff0000";
   document.getElementById("color2d").value = fillColor;
@@ -437,6 +439,13 @@ function resetTransform() {
   
   draw();
 }
+
+function clearCanvas() {
+  const canvas = document.getElementById("canvas2d");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
 
 // Add new comprehensive reset function for 2D
 function resetAll2D() {

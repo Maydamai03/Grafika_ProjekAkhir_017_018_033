@@ -450,6 +450,17 @@ window.resetAll = function () {
   }
 };
 
+window.clearCanvas3D = function () {
+  if (object) {
+    scene.remove(object);
+    object.geometry.dispose();
+    object.material.dispose();
+    object = null;
+    console.log("Canvas 3D dibersihkan.");
+  }
+};
+
+
 // Kontrol rotasi
 window.rotate3d = function (direction) {
   if (!object) return;
