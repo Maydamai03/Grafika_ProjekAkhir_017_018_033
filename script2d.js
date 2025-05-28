@@ -676,7 +676,7 @@ document.addEventListener("DOMContentLoaded", function () {
   updateCanvasCursor();
 
   // Initial shape selection and drawing
-  setShape("bendera"); // Start with default shape
+  setShape("X"); // Start with default shape
   draw(); // Make sure we draw something initially
 
   console.log("2D canvas initialized");
